@@ -3,6 +3,19 @@ import L from 'leaflet';
 const RADIUS = 4300;
 const EARTH_RADIUS = 6378137;
 
+// Add default icon configuration
+const defaultIcon = L.icon({
+  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+L.Marker.prototype.options.icon = defaultIcon;
+
 const detectors = [
   { name: 'PT1 - ATLAS', lat: 46.23497502511518, lng: 6.0536309870679235, angle: 0 },
   { name: 'PT2', lat: 46.251544268663615, lng: 6.021434048433471, angle: 45 },
@@ -51,6 +64,12 @@ class LhcMapOverlay extends HTMLElement {
       <style>
         #map { height: 90vh; width: 100%; }
         select, input { margin: 0.5em; }
+        .leaflet-default-icon-path {
+          background-image: url(https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png);
+        }
+        .leaflet-default-shadow-path {
+          background-image: url(https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png);
+        }
       </style>
       <div>
         <label>
