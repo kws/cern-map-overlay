@@ -5,7 +5,7 @@ import fs from 'fs/promises';
 export default defineConfig({
   build: {
     lib: {
-      entry: path.resolve(__dirname, 'src/LhcMapOverlay.js'),
+      entry: path.resolve(__dirname, 'src/index.js'),
       name: 'LhcMapOverlay',
       fileName: (format) => `lhc-map-overlay.${format}.js`,
       formats: ['es', 'iife']

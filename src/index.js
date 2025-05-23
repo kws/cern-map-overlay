@@ -50,6 +50,93 @@ function computeDestinationPoint(lat, lng, heading, distance) {
   };
 }
 
+class FestivalSelector extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'open' });
+  }
+
+  connectedCallback() {
+    this.shadowRoot.innerHTML = `
+      <style>
+        select { margin: 0.5em; }
+      </style>
+      <label>
+        Festival:
+        <select id="festivalSelect"></select>
+      </label>
+    `;
+
+    this.festivalSelect = this.shadowRoot.getElementById('festivalSelect');
+    festivals.forEach((f, i) => {
+      const option = document.createElement('option');
+      option.value = i;
+      option.textContent = f.name;
+      this.festivalSelect.appendChild(option);
+    });
+
+    this.festivalSelect.addEventListener('change', () => {
+      this.dispatchEvent(new CustomEvent('festival-change', {
+        detail: { index: parseInt(this.festivalSelect.value) }
+      }));
+    });
+  }
+
+  setFestival(index) {
+    this.festivalSelect.value = index;
+    this.festivalSelect.dispatchEvent(new Event('change'));
+  }
+
+  getSelectedFestival() {
+    return parseInt(this.festivalSelect.value);
+  }
+}
+
+class RotationControl extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'open' });
+  }
+
+  connectedCallback() {
+    this.shadowRoot.innerHTML = `
+      <style>
+        input { margin: 0.5em; }
+      </style>
+      <label>
+        Rotation:
+        <input id="rotationSlider" type="range" min="0" max="360" step="1" />
+        <span id="rotationLabel"></span>
+      </label>
+    `;
+
+    this.rotationSlider = this.shadowRoot.getElementById('rotationSlider');
+    this.rotationLabel = this.shadowRoot.getElementById('rotationLabel');
+
+    this.rotationSlider.addEventListener('input', () => {
+      const rotation = parseInt(this.rotationSlider.value);
+      this.rotationLabel.textContent = `${rotation}°`;
+      this.dispatchEvent(new CustomEvent('rotation-change', {
+        detail: { rotation }
+      }));
+    });
+
+    this.addEventListener('rotation-update', (e) => {
+      this.setRotation(e.detail.rotation, e.detail.enabled);
+    });
+  }
+
+  setRotation(rotation, enabled = true) {
+    this.rotationSlider.value = rotation;
+    this.rotationSlider.disabled = !enabled;
+    this.rotationLabel.textContent = `${rotation}°`;
+  }
+
+  getRotation() {
+    return parseInt(this.rotationSlider.value);
+  }
+}
+
 class LhcMapOverlay extends HTMLElement {
   constructor() {
     super();
@@ -63,7 +150,6 @@ class LhcMapOverlay extends HTMLElement {
       <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
       <style>
         #map { height: 90vh; width: 100%; }
-        select, input { margin: 0.5em; }
         .leaflet-default-icon-path {
           background-image: url(https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png);
         }
@@ -71,17 +157,6 @@ class LhcMapOverlay extends HTMLElement {
           background-image: url(https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png);
         }
       </style>
-      <div>
-        <label>
-          Festival:
-          <select id="festivalSelect"></select>
-        </label>
-        <label>
-          Rotation:
-          <input id="rotationSlider" type="range" min="0" max="360" step="1" />
-          <span id="rotationLabel"></span>
-        </label>
-      </div>
       <div id="map"></div>
     `;
 
@@ -90,42 +165,29 @@ class LhcMapOverlay extends HTMLElement {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(this.map);
 
-    this.festivalSelect = this.shadowRoot.getElementById('festivalSelect');
-    festivals.forEach((f, i) => {
-      const option = document.createElement('option');
-      option.value = i;
-      option.textContent = f.name;
-      this.festivalSelect.appendChild(option);
+    // Listen for events from child components
+    this.addEventListener('festival-change', (e) => {
+      this.festivalIndex = e.detail.index;
+      const current = festivals[this.festivalIndex];
+      this.rotation = current.angle;
+      this.dispatchEvent(new CustomEvent('rotation-update', {
+        detail: { rotation: this.rotation, enabled: current.allowRotation }
+      }));
+      this.updateMap();
     });
 
-    this.rotationSlider = this.shadowRoot.getElementById('rotationSlider');
-    this.rotationLabel = this.shadowRoot.getElementById('rotationLabel');
+    this.addEventListener('rotation-change', (e) => {
+      this.rotation = e.detail.rotation;
+      this.updateMap();
+    });
 
-    this.festivalSelect.addEventListener('change', () => this.updateFestival());
-    this.rotationSlider.addEventListener('input', () => this.updateRotation());
-
-    this.updateFestival();
-  }
-
-  updateFestival() {
-    this.festivalIndex = parseInt(this.festivalSelect.value);
-    const current = festivals[this.festivalIndex];
-    this.rotation = current.angle;
-    this.rotationSlider.disabled = !current.allowRotation;
-    this.rotationSlider.value = this.rotation;
-    this.updateMap();
-  }
-
-  updateRotation() {
-    this.rotation = parseInt(this.rotationSlider.value);
-    this.updateMap();
+    this.updateMap()
   }
 
   updateMap() {
     const festival = festivals[this.festivalIndex];
     const rotation = festival.allowRotation ? this.rotation : festival.angle;
     const center = computeDestinationPoint(festival.location.lat, festival.location.lng, rotation, RADIUS);
-    this.rotationLabel.textContent = `${rotation}°`;
 
     this.map.setView([center.lat, center.lng], 12);
     if (this.circle) this.map.removeLayer(this.circle);
@@ -138,7 +200,35 @@ class LhcMapOverlay extends HTMLElement {
       return L.marker([pos.lat, pos.lng]).addTo(this.map).bindPopup(d.name);
     });
   }
+
+  setFestival(index) {
+    this.festivalIndex = index;
+    const current = festivals[this.festivalIndex];
+    this.rotation = current.angle;
+    
+    this.dispatchEvent(new CustomEvent('rotation-update', {
+      detail: { rotation: this.rotation, enabled: current.allowRotation }
+    }));
+    
+    this.updateMap();
+  }
+
+  setRotation(rotation) {
+    this.rotation = rotation;
+    this.updateMap();
+  }
+
+  getCurrentFestival() {
+    return festivals[this.festivalIndex];
+  }
+
+  getCurrentRotation() {
+    return this.rotation;
+  }
 }
 
 customElements.define('lhc-map-overlay', LhcMapOverlay);
+customElements.define('festival-selector', FestivalSelector);
+customElements.define('rotation-control', RotationControl);
+
 
