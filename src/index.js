@@ -1,7 +1,5 @@
 import L from 'leaflet';
-
-const RADIUS = 4300;
-const EARTH_RADIUS = 6378137;
+import LHC  from './lhc';
 
 // Add default icon configuration
 const defaultIcon = L.icon({
@@ -16,40 +14,12 @@ const defaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = defaultIcon;
 
-const detectors = [
-  { name: 'PT1 - ATLAS', lat: 46.23497502511518, lng: 6.0536309870679235, angle: 0 },
-  { name: 'PT2', lat: 46.251544268663615, lng: 6.021434048433471, angle: 45 },
-  { name: 'PT3', lat: 46.277518302316, lng: 6.012012123858463, angle: 88 },
-  { name: 'PT4', lat: 46.30445011831323, lng: 6.037082600001055, angle: 140 },
-  { name: 'PT5 - CMS', lat: 46.31026650910126, lng: 6.078887140749957, angle: 186 },
-  { name: 'PT6', lat: 46.29351162288481, lng: 6.111756560082773, angle: 226 },
-  { name: 'PT7', lat: 46.266418692548335, lng: 6.115151115340182, angle: 269 },
-  { name: 'PT8', lat: 46.2417904558472, lng: 6.097942093891781, angle: 312 },
-];
-
 const festivals = [
-  { name: 'PT1 - ATLAS', location: detectors[0], angle: 10, allowRotation: false },
-  { name: 'WOMAD', location: { lat: 51.602270, lng: -2.082470 }, angle: 0, allowRotation: true },
-  { name: 'Latitude', location: { lat: 52.335003, lng: 1.592255 }, angle: 0, allowRotation: true },
-  { name: 'ROTOTOM Sunsplash', location: { lat: 40.048134, lng: 0.046666 }, angle: 0, allowRotation: true },
-  { name: 'Sonorama', location: { lat: 41.668949, lng: -3.683864 }, angle: 0, allowRotation: true },
+  { name: 'CERN', lat: LHC.center[0], lng: LHC.center[1] },
+  { name: 'WOMAD (2024)', lat: 51.602270, lng: -2.082470 },
+  { name: 'ROTOTOM Sunsplash', lat: 40.048134, lng: 0.046666 },
+  { name: 'Sonorama', lat: 41.668949, lng: -3.683864 },
 ];
-
-function computeDestinationPoint(lat, lng, heading, distance) {
-  const δ = distance / EARTH_RADIUS;
-  const θ = heading * Math.PI / 180;
-  const φ1 = lat * Math.PI / 180;
-  const λ1 = lng * Math.PI / 180;
-
-  const φ2 = Math.asin(Math.sin(φ1) * Math.cos(δ) + Math.cos(φ1) * Math.sin(δ) * Math.cos(θ));
-  const λ2 = λ1 + Math.atan2(Math.sin(θ) * Math.sin(δ) * Math.cos(φ1), Math.cos(δ) - Math.sin(φ1) * Math.sin(φ2));
-
-  return {
-    lat: φ2 * 180 / Math.PI,
-    lng: λ2 * 180 / Math.PI,
-  };
-}
-
 class FestivalSelector extends HTMLElement {
   constructor() {
     super();
@@ -77,72 +47,21 @@ class FestivalSelector extends HTMLElement {
 
     this.festivalSelect.addEventListener('change', () => {
       this.dispatchEvent(new CustomEvent('festival-change', {
-        detail: { index: parseInt(this.festivalSelect.value) }
+        detail: festivals[this.festivalSelect.value]
       }));
     });
   }
 
-  setFestival(index) {
-    this.festivalSelect.value = index;
-    this.festivalSelect.dispatchEvent(new Event('change'));
-  }
-
-  getSelectedFestival() {
-    return parseInt(this.festivalSelect.value);
-  }
-}
-
-class RotationControl extends HTMLElement {
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-  }
-
-  connectedCallback() {
-    this.shadowRoot.innerHTML = `
-      <style>
-        input { margin: 0.5em; }
-      </style>
-      <label>
-        Rotation:
-        <input id="rotationSlider" type="range" min="0" max="360" step="1" />
-        <span id="rotationLabel"></span>
-      </label>
-    `;
-
-    this.rotationSlider = this.shadowRoot.getElementById('rotationSlider');
-    this.rotationLabel = this.shadowRoot.getElementById('rotationLabel');
-
-    this.rotationSlider.addEventListener('input', () => {
-      const rotation = parseInt(this.rotationSlider.value);
-      this.rotationLabel.textContent = `${rotation}°`;
-      this.dispatchEvent(new CustomEvent('rotation-change', {
-        detail: { rotation }
-      }));
-    });
-
-    this.addEventListener('rotation-update', (e) => {
-      this.setRotation(e.detail.rotation, e.detail.enabled);
-    });
-  }
-
-  setRotation(rotation, enabled = true) {
-    this.rotationSlider.value = rotation;
-    this.rotationSlider.disabled = !enabled;
-    this.rotationLabel.textContent = `${rotation}°`;
-  }
-
-  getRotation() {
-    return parseInt(this.rotationSlider.value);
-  }
 }
 
 class LhcMapOverlay extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
-    this.festivalIndex = 0;
-    this.rotation = 0;
+    this.accelerator = LHC;
+    this.acceleratorLayer = null;
+    this.location = {name:"LHC", lat: LHC.center[0], lng: LHC.center[1]};
+    this.markers = null;
   }
 
   connectedCallback() {
@@ -165,70 +84,34 @@ class LhcMapOverlay extends HTMLElement {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(this.map);
 
-    // Listen for events from child components
-    this.addEventListener('festival-change', (e) => {
-      this.festivalIndex = e.detail.index;
-      const current = festivals[this.festivalIndex];
-      this.rotation = current.angle;
-      this.dispatchEvent(new CustomEvent('rotation-update', {
-        detail: { rotation: this.rotation, enabled: current.allowRotation }
-      }));
-      this.updateMap();
-    });
-
-    this.addEventListener('rotation-change', (e) => {
-      this.rotation = e.detail.rotation;
-      this.updateMap();
-    });
-
     this.updateMap()
   }
 
   updateMap() {
-    const festival = festivals[this.festivalIndex];
-    const rotation = festival.allowRotation ? this.rotation : festival.angle;
-    const center = computeDestinationPoint(festival.location.lat, festival.location.lng, rotation, RADIUS);
+    const center = [this.location.lat, this.location.lng];
 
-    this.map.setView([center.lat, center.lng], 12);
-    if (this.circle) this.map.removeLayer(this.circle);
-    this.circle = L.circle([center.lat, center.lng], { radius: RADIUS, color: 'red' }).addTo(this.map);
+    this.map.setView([this.location.lat, this.location.lng], 12);
+
+
+    if (this.acceleratorLayer) this.map.removeLayer(this.acceleratorLayer);
+    this.acceleratorLayer = this.accelerator.getTranslatedPath(center).addTo(this.map);
 
     if (this.markers) this.markers.forEach(m => this.map.removeLayer(m));
-    this.markers = detectors.map((d, idx) => {
-      const angle = (d.angle + rotation + 180) % 360;
-      const pos = idx === 0 ? festival.location : computeDestinationPoint(center.lat, center.lng, angle, RADIUS);
-      return L.marker([pos.lat, pos.lng]).addTo(this.map).bindPopup(d.name);
+    const pois = this.accelerator.getTranslatedPointsOfInterest(center);
+    this.markers = pois.map((poi, idx) => {
+      return L.marker([poi.position[0], poi.position[1]]).addTo(this.map).bindPopup(poi.name);
     });
   }
 
-  setFestival(index) {
-    this.festivalIndex = index;
-    const current = festivals[this.festivalIndex];
-    this.rotation = current.angle;
-    
-    this.dispatchEvent(new CustomEvent('rotation-update', {
-      detail: { rotation: this.rotation, enabled: current.allowRotation }
-    }));
-    
+  setLocation(location) {
+    console.log("This is the center", location);
+    this.location = location;
     this.updateMap();
   }
 
-  setRotation(rotation) {
-    this.rotation = rotation;
-    this.updateMap();
-  }
-
-  getCurrentFestival() {
-    return festivals[this.festivalIndex];
-  }
-
-  getCurrentRotation() {
-    return this.rotation;
-  }
 }
 
 customElements.define('lhc-map-overlay', LhcMapOverlay);
 customElements.define('festival-selector', FestivalSelector);
-customElements.define('rotation-control', RotationControl);
 
 

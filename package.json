@@ -16,11 +16,18 @@
     "map",
     "overlay"
   ],
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "dependencies": {
-    "leaflet": "^1.9.3"
+    "@types/proj4": "^2.5.6",
+    "leaflet": "^1.9.3",
+    "proj4": "^2.17.0"
   },
   "devDependencies": {
+    "@types/leaflet": "^1.9.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
     "vite": "^4.0.0"
   }
 }

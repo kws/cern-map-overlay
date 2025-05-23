@@ -7,26 +7,21 @@
 </head>
 <body>
   <festival-selector></festival-selector>
-  <rotation-control></rotation-control>
   <lhc-map-overlay></lhc-map-overlay>
   <script type="module" src="/src/index.js"></script>
   <script>
     // Listen for changes
     const collider = document.querySelector('lhc-map-overlay');
     const festivalSelector = document.querySelector('festival-selector');
-    const rotationControl = document.querySelector('rotation-control');
 
     festivalSelector.addEventListener('festival-change', (e) => {
-      collider.setFestival(e.detail.index);
+      collider.setLocation(e.detail);
     });
 
-    rotationControl.addEventListener('rotation-update', (e) => {
-      collider.setRotation(e.detail.rotation, e.detail.enabled);
-    });
 
     // But also control programmatically when needed
-    collider.setFestival(3);
-    collider.setRotation(0, true);
+    // collider.setFestival(3);
+    // collider.setRotation(0, true);
   </script>
 </body>
 </html>
