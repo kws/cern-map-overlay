@@ -25,6 +25,19 @@ export interface Accelerator {
 
 }
 
+export interface Location {
+  lat: number;
+  lng: number;
+  name?: string;
+}
+
+export interface GeocoderEvent {
+  geocode: {
+    center: { lat: number; lng: number };
+    name: string;
+  };
+}
+
 export class CircularCollider implements Accelerator {
   private name: string
   private center: LatLngExpression

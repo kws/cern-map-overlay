@@ -1,4 +1,4 @@
-import { CircularCollider, PointOfInterest } from './types/accelerator';
+import { CircularCollider, PointOfInterest } from './types';
 import { LatLngExpression } from 'leaflet';
 
 // Constants
@@ -40,7 +40,7 @@ const LHC_POINTS: PointOfInterest[] = [
   }
 ];
 
-const CENTER: LatLngExpression = LHC_POINTS.reduce<[number, number]>(
+export const CENTER: LatLngExpression = LHC_POINTS.reduce<[number, number]>(
   (acc, point) => {
     const pos = point.position as [number, number];
     return [

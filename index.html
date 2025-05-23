@@ -13,16 +13,22 @@
 </head>
 <body>
   <festival-selector></festival-selector>
+  <geolocate-button></geolocate-button>
   <lhc-map-overlay enable-geocoder></lhc-map-overlay>
 
-  <script type="module" src="/src/index.js"></script>
+  <script type="module" src="/src/index.ts"></script>
 
   <script>
     // Listen for changes
     const map = document.querySelector('lhc-map-overlay');
     const festivalSelector = document.querySelector('festival-selector');
+    const geolocateButton = document.querySelector('geolocate-button');
 
     festivalSelector.addEventListener('festival-change', (e) => {
+      map.setLocation(e.detail);
+    });
+
+    geolocateButton.addEventListener('location-found', (e) => {
       map.setLocation(e.detail);
     });
 
