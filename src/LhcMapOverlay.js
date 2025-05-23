@@ -1,5 +1,4 @@
 import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 
 const RADIUS = 4300;
 const EARTH_RADIUS = 6378137;
