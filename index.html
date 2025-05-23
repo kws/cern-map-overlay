@@ -4,24 +4,33 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LHC Map Overlay Demo</title>
+  <style>
+    lhc-map-overlay {
+      height: 90vh;
+    }
+  </style>
+
 </head>
 <body>
   <festival-selector></festival-selector>
-  <lhc-map-overlay></lhc-map-overlay>
+  <lhc-map-overlay enable-geocoder></lhc-map-overlay>
+
   <script type="module" src="/src/index.js"></script>
+
   <script>
     // Listen for changes
-    const collider = document.querySelector('lhc-map-overlay');
+    const map = document.querySelector('lhc-map-overlay');
     const festivalSelector = document.querySelector('festival-selector');
 
     festivalSelector.addEventListener('festival-change', (e) => {
-      collider.setLocation(e.detail);
+      map.setLocation(e.detail);
     });
 
+    // // Wait for the custom element to be defined
+    customElements.whenDefined('lhc-map-overlay').then(() => {
+      // map.enableGeocoder();
+    });
 
-    // But also control programmatically when needed
-    // collider.setFestival(3);
-    // collider.setRotation(0, true);
   </script>
 </body>
 </html>

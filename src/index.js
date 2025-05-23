@@ -1,5 +1,8 @@
 import L from 'leaflet';
-import LHC  from './lhc';
+import LHC from './lhc';
+import 'leaflet-control-geocoder';
+import geocoderStyles from 'leaflet-control-geocoder/dist/Control.Geocoder.css?raw';
+import leafletStyles from 'leaflet/dist/leaflet.css?raw';
 
 // Add default icon configuration
 const defaultIcon = L.icon({
@@ -55,56 +58,126 @@ class FestivalSelector extends HTMLElement {
 }
 
 class LhcMapOverlay extends HTMLElement {
+  static get observedAttributes() {
+    return ['enable-geocoder', 'lat', 'lng'];
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === 'enable-geocoder' && newValue !== null) {
+      this._geocoderEnabled = true;
+    }
+
+    if (name === 'lat' && name === 'lng') {
+      const lat = this.getAttribute('lat');
+      const lng = this.getAttribute('lng');
+      if (lat && lng) {
+        this.setLocation({ lat: parseFloat(lat), lng: parseFloat(lng) });
+      }
+    }
+  }
+
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
     this.accelerator = LHC;
     this.acceleratorLayer = null;
     this.location = {name:"LHC", lat: LHC.center[0], lng: LHC.center[1]};
     this.markers = null;
+    this._map = null;
+    this._gecoder = null;
+    this._geocoderEnabled = false;
+    this.attachShadow({ mode: 'open' });
+
+    // Create and adopt both stylesheets
+    const geocoderSheet = new CSSStyleSheet();
+    geocoderSheet.replaceSync(geocoderStyles);
+    
+    const leafletSheet = new CSSStyleSheet();
+    leafletSheet.replaceSync(leafletStyles);
+    
+    this.shadowRoot.adoptedStyleSheets = [leafletSheet, geocoderSheet];
+  }
+
+  // Expose the map instance through a getter
+  get map() {
+    return this._map;
+  }
+
+  enableGeocoder() {
+    this._geocoderEnabled = true;
+    this.updateMap();
+
+  }
+
+  // Method to add custom controls
+  addControl(control) {
+    if (this._map && control) {
+      control.addTo(this._map);
+    }
+  }
+
+  // Method to add custom layers
+  addLayer(layer) {
+    if (this._map && layer) {
+      layer.addTo(this._map);
+    }
+  }
+
+  // Method to add event listeners to the map
+  addMapEventListener(event, handler) {
+    if (this._map) {
+      this._map.on(event, handler);
+    }
   }
 
   connectedCallback() {
     this.shadowRoot.innerHTML = `
-      <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
       <style>
-        #map { height: 90vh; width: 100%; }
-        .leaflet-default-icon-path {
-          background-image: url(https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png);
+        :host {
+          display: block;
+          width: 100%;
+          height: 400px;
         }
-        .leaflet-default-shadow-path {
-          background-image: url(https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png);
-        }
+        #map { height: 100%; width: 100%; }
       </style>
       <div id="map"></div>
     `;
 
-    this.map = L.map(this.shadowRoot.getElementById('map')).setView([46.234975, 6.053630], 12);
+    this._map = L.map(this.shadowRoot.getElementById('map')).setView([this.location.lat, this.location.lng], 12);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(this.map);
+    }).addTo(this._map);
 
-    this.updateMap()
+    this.updateMap();
+  }
+
+  _enableGeocoder() {
+    if (!this._geocoderEnabled || !this._map || this._gecoder) return;
+
+    this._gecoder = L.Control.geocoder();
+    this._gecoder.addTo(this._map);
+
+    this._gecoder.on('markgeocode', (e) => {
+      const { center, name } = e.geocode;
+      this.setLocation({ name, lat: center.lat, lng: center.lng });
+    });
   }
 
   updateMap() {
+    this._enableGeocoder();
     const center = [this.location.lat, this.location.lng];
 
-    this.map.setView([this.location.lat, this.location.lng], 12);
+    this._map.setView([this.location.lat, this.location.lng], 12);
+    if (this.acceleratorLayer) this._map.removeLayer(this.acceleratorLayer);
+    this.acceleratorLayer = this.accelerator.getTranslatedPath(center).addTo(this._map);
 
-
-    if (this.acceleratorLayer) this.map.removeLayer(this.acceleratorLayer);
-    this.acceleratorLayer = this.accelerator.getTranslatedPath(center).addTo(this.map);
-
-    if (this.markers) this.markers.forEach(m => this.map.removeLayer(m));
+    if (this.markers) this.markers.forEach(m => this._map.removeLayer(m));
     const pois = this.accelerator.getTranslatedPointsOfInterest(center);
     this.markers = pois.map((poi, idx) => {
-      return L.marker([poi.position[0], poi.position[1]]).addTo(this.map).bindPopup(poi.name);
+      return L.marker([poi.position[0], poi.position[1]]).addTo(this._map).bindPopup(poi.name);
     });
   }
 
   setLocation(location) {
-    console.log("This is the center", location);
     this.location = location;
     this.updateMap();
   }
