@@ -12,12 +12,26 @@
 
 </head>
 <body>
-  <festival-selector></festival-selector>
-  <geolocate-button></geolocate-button>
-  <lhc-map-overlay enable-geocoder></lhc-map-overlay>
+  <!-- <festival-selector></festival-selector>
+  <geolocate-button></geolocate-button> -->
+  <lhc-map-overlay></lhc-map-overlay>
 
   <script type="module" src="/src/index.ts"></script>
-
+  <script type="module">
+    import LHC from './src/accelerators/lhc';
+    import SPS from './src/accelerators/sps';
+    import PS from './src/accelerators/ps';
+    import BOOSTER from './src/accelerators/booster';
+    import FCC from './src/accelerators/fcc';
+    const map = document.querySelector('lhc-map-overlay');
+    map.addAccelerator(LHC); 
+    map.addAccelerator(SPS);
+    map.addAccelerator(PS);
+    map.addAccelerator(BOOSTER);
+    map.addAccelerator(FCC);
+    map.zoom = 12;
+  </script>
+<!-- 
   <script>
     // Listen for changes
     const map = document.querySelector('lhc-map-overlay');
@@ -37,6 +51,6 @@
       // map.enableGeocoder();
     });
 
-  </script>
+  </script> -->
 </body>
 </html>

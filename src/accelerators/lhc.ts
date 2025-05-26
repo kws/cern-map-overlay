@@ -1,10 +1,8 @@
-import { CircularCollider, PointOfInterest } from './types';
-import { LatLngExpression } from 'leaflet';
+import { CircularCollider, PointOfInterest } from '../types';
+import { LatLng } from 'leaflet';
 
-// Constants
 const LHC_RADIUS = 4300; // meters
 
-// Define the LHC detectors as points of interest
 const LHC_POINTS: PointOfInterest[] = [
   {
     name: 'ATLAS',
@@ -40,23 +38,13 @@ const LHC_POINTS: PointOfInterest[] = [
   }
 ];
 
-export const CENTER: LatLngExpression = LHC_POINTS.reduce<[number, number]>(
-  (acc, point) => {
-    const pos = point.position as [number, number];
-    return [
-      acc[0] + pos[0],
-      acc[1] + pos[1]
-    ];
-  },
-  [0, 0]
-).map(coord => coord / LHC_POINTS.length) as [number, number];
+export const CENTER: LatLng = new LatLng(46.2725593743487, 6.065987083678201);
 
-// Create the LHC accelerator instance
-const lhc = new CircularCollider(
+const LHC = new CircularCollider(
   'Large Hadron Collider',
   CENTER,
   LHC_RADIUS,
   LHC_POINTS
 );
 
-export default lhc;
+export default LHC;

@@ -1,4 +1,4 @@
-import { Circle, LatLngExpression, Path } from 'leaflet';
+import { Circle, LatLngExpression, LatLngLiteral, LatLng, Path, latLng } from 'leaflet';
 import proj4 from 'proj4';
 
 // Define the source projection
@@ -20,6 +20,7 @@ export interface PointOfInterest {
 export interface Accelerator {
 
   getName(): string
+  getReferencePoint(): LatLng
   getTranslatedPath(referencePoint: LatLngExpression): Path
   getTranslatedPointsOfInterest(referencePoint: LatLngExpression): PointOfInterest[]
 
@@ -40,13 +41,13 @@ export interface GeocoderEvent {
 
 export class CircularCollider implements Accelerator {
   private name: string
-  private center: LatLngExpression
+  private center: LatLng
   private radius: number
   private pointsOfInterest: PointOfInterest[]
 
   constructor(name: string, center: LatLngExpression, radius: number, pointsOfInterest: PointOfInterest[]) {
     this.name = name
-    this.center = center
+    this.center = latLng(center)
     this.radius = radius
     this.pointsOfInterest = pointsOfInterest
   }
@@ -55,8 +56,12 @@ export class CircularCollider implements Accelerator {
     return this.name
   }
 
+  getReferencePoint(): LatLng {
+    return this.center;
+  }
+
   getTranslatedPath(referencePoint: LatLngExpression): Path {
-    return new Circle(referencePoint, { radius: this.radius })
+    return new Circle(referencePoint, { radius: this.radius, fill: false })
   }
 
   getTranslatedPointsOfInterest(referencePoint: LatLngExpression): PointOfInterest[] {
