@@ -47,7 +47,7 @@
   <body>
     <div class="accelerator-controls">
       <button id="geolocate-button">📍 Locate Me</button>
-      <label><input type="checkbox" data-accelerator="SBS" /> SBS</label>
+      <label><input type="checkbox" data-accelerator="PSB" /> PSB</label>
       <label><input type="checkbox" data-accelerator="PS" /> PS</label>
       <label><input type="checkbox" data-accelerator="SPS" /> SPS</label>
       <label><input type="checkbox" data-accelerator="LHC" checked /> LHC</label>
@@ -60,11 +60,7 @@
 
     <script type="module" src="/src/index.ts"></script>
     <script type="module">
-      import LHC from './src/accelerators/lhc';
-      import SPS from './src/accelerators/sps';
-      import PS from './src/accelerators/ps';
-      import SBS from './src/accelerators/booster';
-      import FCC from './src/accelerators/fcc';
+      import { LHC, SPS, PS, PSB, FCC } from './src/index.ts';
 
       const map = document.querySelector('cern-map-overlay');
       map.zoom = 12;
@@ -74,7 +70,7 @@
         LHC: LHC,
         SPS: SPS,
         PS: PS,
-        SBS: SBS,
+        PSB: PSB,
         FCC: FCC,
       };
 

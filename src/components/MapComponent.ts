@@ -5,6 +5,11 @@ import geocoder from 'leaflet-control-geocoder';
 import geocoderStyles from 'leaflet-control-geocoder/dist/Control.Geocoder.css?raw';
 import leafletStyles from 'leaflet/dist/leaflet.css?raw';
 import { Accelerator } from '../types';
+import LHC from '../accelerators/lhc';
+import SPS from '../accelerators/sps';
+import PS from '../accelerators/ps';
+import PSB from '../accelerators/booster';
+import FCC from '../accelerators/fcc';
 
 interface GeocoderEvent {
   geocode: {
@@ -34,6 +39,15 @@ export class CERNMapOverlay extends LitElement {
   private _geocoder: any = null; // Geocoder control instance with methods: addTo, remove, on
   private _isUpdatingFromMap = false; // Prevent circular updates
 
+  // Available accelerators mapping
+  private static readonly AVAILABLE_ACCELERATORS = {
+    LHC,
+    SPS,
+    PS,
+    PSB,
+    FCC,
+  };
+
   @property({ type: Number })
   lat = 46.23497502511518;
 
@@ -48,6 +62,9 @@ export class CERNMapOverlay extends LitElement {
 
   @property({ type: Boolean, attribute: 'follow-location' })
   followLocation = true;
+
+  @property({ type: String, attribute: 'show-accelerators' })
+  showAccelerators = '';
 
   firstUpdated() {
     const mapElement = this.shadowRoot?.getElementById('map');
@@ -71,6 +88,10 @@ export class CERNMapOverlay extends LitElement {
 
       this.map.on('moveend', this.onMoveEnd.bind(this));
     }
+
+    // Load accelerators specified in the show-accelerators property
+    this.loadAcceleratorsFromProperty();
+
     this.updateMap();
   }
 
@@ -98,7 +119,46 @@ export class CERNMapOverlay extends LitElement {
         this._geocoder = null;
       }
     }
+
+    if (changedProperties.has('showAccelerators')) {
+      this.loadAcceleratorsFromProperty();
+    }
+
     this.updateMap();
+  }
+
+  private loadAcceleratorsFromProperty() {
+    // Clear existing accelerators that were loaded from the property
+    // (but keep manually added ones - we'll use a prefix to distinguish)
+    const toRemove: string[] = [];
+    this.accelerators.forEach((_, name) => {
+      if (name.startsWith('__auto_')) {
+        toRemove.push(name);
+      }
+    });
+    toRemove.forEach((name) => this.removeAccelerator(name));
+
+    // Parse and load new accelerators
+    if (this.showAccelerators.trim()) {
+      const acceleratorNames = this.showAccelerators
+        .split(',')
+        .map((name) => name.trim().toUpperCase())
+        .filter((name) => name.length > 0);
+
+      acceleratorNames.forEach((name) => {
+        const accelerator =
+          CERNMapOverlay.AVAILABLE_ACCELERATORS[
+            name as keyof typeof CERNMapOverlay.AVAILABLE_ACCELERATORS
+          ];
+        if (accelerator) {
+          this.addAccelerator(`__auto_${name}`, accelerator);
+        } else {
+          console.warn(
+            `Unknown accelerator: ${name}. Available accelerators: ${Object.keys(CERNMapOverlay.AVAILABLE_ACCELERATORS).join(', ')}`,
+          );
+        }
+      });
+    }
   }
 
   onMoveEnd() {

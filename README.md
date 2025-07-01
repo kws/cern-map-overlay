@@ -75,14 +75,31 @@ Then import the component in your application code:
 import 'cern-map-overlay';
 ```
 
-## API Example
+You can also import the accelerator definitions:
+
+```js
+import { LHC, SPS, PS, PSB, FCC } from 'cern-map-overlay';
+```
+
+## Simple Usage
+
+The easiest way to show accelerators is using the `show-accelerators` attribute:
+
+```html
+<script type="module" src="https://unpkg.com/cern-map-overlay"></script>
+<cern-map-overlay show-accelerators="LHC,SPS" geocoder-enabled="true"></cern-map-overlay>
+```
+
+This will automatically display the LHC and SPS accelerators on the map.
+
+## Advanced API Example
 
 Here's a full example based on the demo in `index.html`. It shows how to wire up festival and geolocation controls to the map overlay:
 
 ```html
 <div class="accelerator-controls">
   <button id="geolocate-button">📍 Locate Me</button>
-  <label><input type="checkbox" data-accelerator="SBS" /> SBS</label>
+  <label><input type="checkbox" data-accelerator="PSB" /> PSB</label>
   <label><input type="checkbox" data-accelerator="PS" /> PS</label>
   <label><input type="checkbox" data-accelerator="SPS" /> SPS</label>
   <label><input type="checkbox" data-accelerator="LHC" checked /> LHC</label>
@@ -95,11 +112,7 @@ Here's a full example based on the demo in `index.html`. It shows how to wire up
 
 <script type="module" src="https://unpkg.com/cern-map-overlay"></script>
 <script type="module">
-  import LHC from './src/accelerators/lhc';
-  import SPS from './src/accelerators/sps';
-  import PS from './src/accelerators/ps';
-  import SBS from './src/accelerators/booster';
-  import FCC from './src/accelerators/fcc';
+  import { LHC, SPS, PS, PSB, FCC } from 'cern-map-overlay';
 
   const map = document.querySelector('cern-map-overlay');
   map.zoom = 12;
@@ -109,7 +122,7 @@ Here's a full example based on the demo in `index.html`. It shows how to wire up
     LHC: LHC,
     SPS: SPS,
     PS: PS,
-    SBS: SBS,
+    PSB: PSB,
     FCC: FCC,
   };
 
@@ -164,11 +177,12 @@ Here's a full example based on the demo in `index.html`. It shows how to wire up
 
 The `<cern-map-overlay>` element supports the following attributes:
 
-| Attribute         | Type    | Description                                       |
-| ----------------- | ------- | ------------------------------------------------- |
-| `enable-geocoder` | boolean | Enables the geocoder search control when present. |
-| `lat`             | number  | Initial map center latitude (use with `lng`).     |
-| `lng`             | number  | Initial map center longitude (use with `lat`).    |
+| Attribute           | Type    | Description                                       |
+| ------------------- | ------- | ------------------------------------------------- |
+| `enable-geocoder`   | boolean | Enables the geocoder search control when present. |
+| `lat`               | number  | Initial map center latitude (use with `lng`).     |
+| `lng`               | number  | Initial map center longitude (use with `lat`).    |
+| `show-accelerators` | string  | Comma-separated list of accelerators to display (e.g., "LHC,SPS"). Available: LHC, SPS, PS, PSB, FCC. |
 
 It also exposes several methods for customizing the map:
 
