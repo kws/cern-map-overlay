@@ -61,7 +61,7 @@ export class CERNMapOverlay extends LitElement {
   geocoderEnabled = false;
 
   @property({ type: Boolean, attribute: 'follow-location' })
-  followLocation = true;
+  followLocation = false;
 
   @property({ type: String, attribute: 'show-accelerators' })
   showAccelerators = '';
@@ -122,6 +122,13 @@ export class CERNMapOverlay extends LitElement {
 
     if (changedProperties.has('showAccelerators')) {
       this.loadAcceleratorsFromProperty();
+    }
+
+    if (changedProperties.has('followLocation')) {
+      // When followLocation changes, we need to update the map to redraw accelerators
+      // with the new reference point (either current location or accelerator's reference point)
+      this.updateMap();
+      return; // updateMap() is called, so we don't need to call it again
     }
 
     this.updateMap();
