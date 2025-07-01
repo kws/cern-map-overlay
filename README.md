@@ -1,6 +1,6 @@
-# LHC Map Overlay
+# CERN Map Overlay
 
-A web component that displays a map overlay of the Large Hadron Collider (LHC) detectors using [Leaflet](https://leafletjs.com/).
+A web component that displays a map overlay of CERN accelerators using [Leaflet](https://leafletjs.com/).
 
 ## Development
 
@@ -21,26 +21,44 @@ pnpm build
 
 The build outputs the distribution files in the `dist` directory, including:
 
-- `lhc-map-overlay.es.js` (ES module)
-- `lhc-map-overlay.iife.js` (IIFE build)
+- `cern-map-overlay.es.js` (ES module)
+- `cern-map-overlay.iife.js` (IIFE build)
 - `index.html` (stand‑alone demo)
 
 ## Usage
 
 ### Including the component
 
-Use the IIFE bundle to include the component directly in the browser:
+You can include the component directly in your HTML using unpkg.com:
+
+**ES Module (recommended for modern browsers and build systems):**
 
 ```html
-<script src="dist/lhc-map-overlay.iife.js"></script>
-<lhc-map-overlay></lhc-map-overlay>
+<script type="module" src="https://unpkg.com/cern-map-overlay"></script>
+<cern-map-overlay></cern-map-overlay>
 ```
 
-Or use the ES module build:
+**IIFE Bundle (for direct script inclusion in older environments):**
 
 ```html
-<script type="module" src="path/to/lhc-map-overlay.es.js"></script>
-<lhc-map-overlay></lhc-map-overlay>
+<script src="https://unpkg.com/cern-map-overlay"></script>
+<cern-map-overlay></cern-map-overlay>
+```
+
+Alternatively, if you are serving the files locally from the `dist` directory:
+
+**IIFE Bundle:**
+
+```html
+<script src="dist/cern-map-overlay.iife.js"></script>
+<cern-map-overlay></cern-map-overlay>
+```
+
+**ES Module:**
+
+```html
+<script type="module" src="dist/cern-map-overlay.es.js"></script>
+<cern-map-overlay></cern-map-overlay>
 ```
 
 ### Install from npm
@@ -48,13 +66,13 @@ Or use the ES module build:
 Install the package from npm (or pnpm/yarn):
 
 ```bash
-npm install lhc-map-overlay
+npm install cern-map-overlay
 ```
 
 Then import the component in your application code:
 
 ```js
-import 'lhc-map-overlay';
+import 'cern-map-overlay';
 ```
 
 ## API Example
@@ -62,38 +80,89 @@ import 'lhc-map-overlay';
 Here's a full example based on the demo in `index.html`. It shows how to wire up festival and geolocation controls to the map overlay:
 
 ```html
-<festival-selector></festival-selector>
-<geolocate-button></geolocate-button>
-<lhc-map-overlay enable-geocoder></lhc-map-overlay>
+<div class="accelerator-controls">
+  <button id="geolocate-button">📍 Locate Me</button>
+  <label><input type="checkbox" data-accelerator="SBS" /> SBS</label>
+  <label><input type="checkbox" data-accelerator="PS" /> PS</label>
+  <label><input type="checkbox" data-accelerator="SPS" /> SPS</label>
+  <label><input type="checkbox" data-accelerator="LHC" checked /> LHC</label>
+  <label><input type="checkbox" data-accelerator="FCC" /> FCC</label>
 
-<script type="module" src="path/to/lhc-map-overlay.es.js"></script>
+  <label><input type="checkbox" id="follow-location-checkbox" /> Follow Location</label>
+</div>
 
-<script>
-  const map = document.querySelector('lhc-map-overlay');
-  const festivalSelector = document.querySelector('festival-selector');
-  const geolocateButton = document.querySelector('geolocate-button');
+<cern-map-overlay geocoder-enabled="true"></cern-map-overlay>
 
-  // Change map center when festival selection changes
-  festivalSelector.addEventListener('festival-change', (e) => {
-    map.setLocation(e.detail);
+<script type="module" src="https://unpkg.com/cern-map-overlay"></script>
+<script type="module">
+  import LHC from './src/accelerators/lhc';
+  import SPS from './src/accelerators/sps';
+  import PS from './src/accelerators/ps';
+  import SBS from './src/accelerators/booster';
+  import FCC from './src/accelerators/fcc';
+
+  const map = document.querySelector('cern-map-overlay');
+  map.zoom = 12;
+
+  // Create a mapping of accelerator names to objects
+  const acceleratorMap = {
+    LHC: LHC,
+    SPS: SPS,
+    PS: PS,
+    SBS: SBS,
+    FCC: FCC,
+  };
+
+  const acceleratorCheckboxes = document.querySelectorAll('input[data-accelerator]');
+  acceleratorCheckboxes.forEach((checkbox) => {
+    const acceleratorName = checkbox.dataset.accelerator;
+    const acceleratorObject = acceleratorMap[acceleratorName];
+    checkbox.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        console.log('adding accelerator', acceleratorName);
+        map.addAccelerator(acceleratorName, acceleratorObject);
+      } else {
+        console.log('removing accelerator', acceleratorName);
+        map.removeAccelerator(acceleratorName);
+      }
+    });
+    if (checkbox.checked) {
+      map.addAccelerator(acceleratorName, acceleratorObject);
+    }
   });
 
-  // Center map on user's location
-  geolocateButton.addEventListener('location-found', (e) => {
-    map.setLocation(e.detail);
+  const geolocateButton = document.querySelector('#geolocate-button');
+  geolocateButton.addEventListener('click', (e) => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        map.lat = latitude;
+        map.lng = longitude;
+        map.followLocation = true;
+        followLocationCheckbox.checked = true;
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+      },
+    );
   });
 
-  // You can also programmatically set the location and enable the geocoder control if needed. But this has to be done after the component is defined.
-  customElements.whenDefined('lhc-map-overlay').then(() => {
-    map.enableGeocoder();
-    map.setLocation({ name: 'LHC', lat: 46.2276, lng: 6.0299 });
+  const followLocationCheckbox = document.querySelector('#follow-location-checkbox');
+  followLocationCheckbox.addEventListener('change', (e) => {
+    map.followLocation = e.target.checked;
+  });
+  map.followLocation = followLocationCheckbox.checked;
+
+  map.addEventListener('markgeocode', (e) => {
+    map.followLocation = true;
+    followLocationCheckbox.checked = true;
   });
 </script>
 ```
 
 ## Component API
 
-The `<lhc-map-overlay>` element supports the following attributes:
+The `<cern-map-overlay>` element supports the following attributes:
 
 | Attribute         | Type    | Description                                       |
 | ----------------- | ------- | ------------------------------------------------- |
@@ -105,8 +174,7 @@ It also exposes several methods for customizing the map:
 
 | Method                  | Description                                                                     |
 | ----------------------- | ------------------------------------------------------------------------------- |
-| `setLocation(location)` | Re-center the map and overlay based on a `{ name, lat, lng }` object.           |
-| `enableGeocoder()`      | Adds a geocoder search control to the map.                                      |
+| `setLocation(location)` | Re-center the map and overlay based on a `{ lat: number, lng: number, name?: string }` object.           |
 | `addControl(control)`   | Adds a custom Leaflet control to the map.                                       |
 | `addLayer(layer)`       | Adds a custom Leaflet layer to the map.                                         |
 | `addMapEventListener()` | Attach event handlers to the underlying Leaflet map instance (e.g., 'zoomend'). |
