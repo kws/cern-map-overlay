@@ -35,16 +35,11 @@ const LHC_POINTS: PointOfInterest[] = [
   {
     name: 'Point 8',
     position: [46.2417904558472, 6.097942093891781],
-  }
+  },
 ];
 
 export const CENTER: LatLng = new LatLng(46.2725593743487, 6.065987083678201);
 
-const LHC = new CircularCollider(
-  'Large Hadron Collider',
-  CENTER,
-  LHC_RADIUS,
-  LHC_POINTS
-);
+const LHC = new CircularCollider('Large Hadron Collider', CENTER, LHC_RADIUS, LHC_POINTS);
 
 export default LHC;

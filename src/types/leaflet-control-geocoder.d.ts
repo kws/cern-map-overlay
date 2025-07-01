@@ -29,8 +29,8 @@ declare module 'leaflet-control-geocoder' {
 
   const geocoder: {
     (options?: GeocoderOptions): Geocoder;
-    new(options?: GeocoderOptions): Geocoder;
+    new (options?: GeocoderOptions): Geocoder;
   };
 
   export default geocoder;
-} 
+}

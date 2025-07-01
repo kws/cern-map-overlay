@@ -5,11 +5,6 @@ const LHC_RADIUS = 14500; // meters
 
 export const CENTER: LatLng = new LatLng(46.12280614864221, 6.131499400104788);
 
-const FCC = new CircularCollider(
-  'Future Circular Collider',
-  CENTER,
-  LHC_RADIUS,
-  []
-);
+const FCC = new CircularCollider('Future Circular Collider', CENTER, LHC_RADIUS, []);
 
 export default FCC;

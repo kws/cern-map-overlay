@@ -8,8 +8,8 @@ export default defineConfig({
       entry: path.resolve(__dirname, 'src/index.ts'),
       name: 'LhcMapOverlay',
       fileName: (format) => `lhc-map-overlay.${format}.js`,
-      formats: ['es', 'iife']
-    }
+      formats: ['es', 'iife'],
+    },
   },
   plugins: [
     {
@@ -20,10 +20,10 @@ export default defineConfig({
         let html = await fs.readFile(demoHtmlPath, 'utf8');
         html = html.replace(
           /<script type="module" src="[^"]+"><\/script>/,
-          `<script type="module" src="lhc-map-overlay.es.js"></script>`
+          `<script type="module" src="lhc-map-overlay.es.js"></script>`,
         );
         await fs.writeFile(outHtmlPath, html);
-      }
-    }
-  ]
+      },
+    },
+  ],
 });

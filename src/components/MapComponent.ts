@@ -1,44 +1,52 @@
-import {html, css, LitElement} from 'lit';
-import {customElement, property} from 'lit/decorators.js';
+import { html, css, LitElement } from 'lit';
+import { customElement, property } from 'lit/decorators.js';
 import L, { type LatLngExpression, LatLng } from 'leaflet';
 import geocoder from 'leaflet-control-geocoder';
 import geocoderStyles from 'leaflet-control-geocoder/dist/Control.Geocoder.css?raw';
 import leafletStyles from 'leaflet/dist/leaflet.css?raw';
 import { Accelerator } from '../types';
 
+interface GeocoderEvent {
+  geocode: {
+    name: string;
+    center: { lat: number; lng: number };
+  };
+}
+
 @customElement('lhc-map-overlay')
 export class SimpleGreeting extends LitElement {
   static styles = css`
-    :host { 
+    :host {
       display: block;
-      width: 100%; 
-      height: 400px; 
+      width: 100%;
+      height: 400px;
     }
     #map {
-      height: 100%; 
-      width: 100%; 
+      height: 100%;
+      width: 100%;
     }
   `;
 
   private map: L.Map | null = null;
   private accelerators: Map<string, Accelerator> = new Map();
   private layers: Map<string, L.Path> = new Map();
-  private _geocoder: any | null = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private _geocoder: any = null; // Geocoder control instance with methods: addTo, remove, on
   private _isUpdatingFromMap = false; // Prevent circular updates
 
-  @property({type: Number})
+  @property({ type: Number })
   lat = 46.23497502511518;
 
-  @property({type: Number})
+  @property({ type: Number })
   lng = 6.0536309870679235;
 
-  @property({type: Number})
+  @property({ type: Number })
   zoom = 12;
 
-  @property({type: Boolean, attribute: 'geocoder-enabled'})
+  @property({ type: Boolean, attribute: 'geocoder-enabled' })
   geocoderEnabled = false;
 
-  @property({type: Boolean, attribute: 'follow-location'})
+  @property({ type: Boolean, attribute: 'follow-location' })
   followLocation = true;
 
   firstUpdated() {
@@ -46,7 +54,7 @@ export class SimpleGreeting extends LitElement {
     if (mapElement) {
       this.map = L.map(mapElement).setView([this.lat, this.lng], this.zoom);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
+        attribution: '&copy; OpenStreetMap contributors',
       }).addTo(this.map);
       const geocoderSheet = new CSSStyleSheet();
       geocoderSheet.replaceSync(geocoderStyles);
@@ -54,7 +62,11 @@ export class SimpleGreeting extends LitElement {
       const leafletSheet = new CSSStyleSheet();
       leafletSheet.replaceSync(leafletStyles);
       if (this.shadowRoot) {
-        this.shadowRoot.adoptedStyleSheets = [...this.shadowRoot.adoptedStyleSheets, leafletSheet, geocoderSheet];
+        this.shadowRoot.adoptedStyleSheets = [
+          ...this.shadowRoot.adoptedStyleSheets,
+          leafletSheet,
+          geocoderSheet,
+        ];
       }
 
       this.map.on('moveend', this.onMoveEnd.bind(this));
@@ -64,13 +76,13 @@ export class SimpleGreeting extends LitElement {
 
   updated(changedProperties: Map<string | number | symbol, unknown>) {
     if (!this.map) return;
-  
+
     // Only update map view if changes came from external property updates, not from map interactions
     if (!this._isUpdatingFromMap) {
       if (changedProperties.has('lat') || changedProperties.has('lng')) {
         this.map.setView([this.lat, this.lng], this.zoom);
       }
-    
+
       if (changedProperties.has('zoom')) {
         this.map.setZoom(this.zoom);
       }
@@ -98,13 +110,15 @@ export class SimpleGreeting extends LitElement {
     // Don't call updateMap() here - it will be called by updated()
   }
 
-  onGeocode = (e: any) => {
-    this.dispatchEvent(new CustomEvent('markgeocode', { 
-      detail: e,
-      bubbles: true,
-      composed: true 
-    }));
-  }
+  onGeocode = (e: GeocoderEvent) => {
+    this.dispatchEvent(
+      new CustomEvent('markgeocode', {
+        detail: e,
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  };
 
   addAccelerator(name: string, accelerator: Accelerator): void;
   addAccelerator(accelerator: Accelerator): void;
@@ -125,7 +139,7 @@ export class SimpleGreeting extends LitElement {
         this.map.removeLayer(layer);
       }
       this.accelerators.delete(acceleratorName);
-      this.layers.delete(acceleratorName);      
+      this.layers.delete(acceleratorName);
       this.updateMap();
     }
   }
@@ -139,7 +153,9 @@ export class SimpleGreeting extends LitElement {
       if (oldLayer) {
         map.removeLayer(oldLayer);
       }
-      const refPoint : LatLngExpression = this.followLocation ? new LatLng(this.lat, this.lng) : accelerator.getReferencePoint();
+      const refPoint: LatLngExpression = this.followLocation
+        ? new LatLng(this.lat, this.lng)
+        : accelerator.getReferencePoint();
       const translatedPath = accelerator.getTranslatedPath(refPoint);
       if (translatedPath) {
         const layer = translatedPath.addTo(map);

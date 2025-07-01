@@ -1,31 +1,31 @@
- # LHC Map Overlay
+# LHC Map Overlay
 
- A web component that displays a map overlay of the Large Hadron Collider (LHC) detectors using [Leaflet](https://leafletjs.com/).
+A web component that displays a map overlay of the Large Hadron Collider (LHC) detectors using [Leaflet](https://leafletjs.com/).
 
- ## Development
+## Development
 
- Install dependencies and start the dev server:
+Install dependencies and start the dev server:
 
- ```bash
- pnpm install
- pnpm dev
- ```
+```bash
+pnpm install
+pnpm dev
+```
 
- Open `http://localhost:5173` in your browser to view the demo.
+Open `http://localhost:5173` in your browser to view the demo.
 
- ## Build
+## Build
 
- ```bash
- pnpm build
- ```
+```bash
+pnpm build
+```
 
- The build outputs the distribution files in the `dist` directory, including:
+The build outputs the distribution files in the `dist` directory, including:
 
- - `lhc-map-overlay.es.js` (ES module)
- - `lhc-map-overlay.iife.js` (IIFE build)
- - `index.html` (stand‑alone demo)
+- `lhc-map-overlay.es.js` (ES module)
+- `lhc-map-overlay.iife.js` (IIFE build)
+- `index.html` (stand‑alone demo)
 
- ## Usage
+## Usage
 
 ### Including the component
 
@@ -95,18 +95,18 @@ Here's a full example based on the demo in `index.html`. It shows how to wire up
 
 The `<lhc-map-overlay>` element supports the following attributes:
 
-| Attribute         | Type    | Description                                                    |
-|-------------------|---------|----------------------------------------------------------------|
-| `enable-geocoder` | boolean | Enables the geocoder search control when present.              |
-| `lat`             | number  | Initial map center latitude (use with `lng`).                  |
-| `lng`             | number  | Initial map center longitude (use with `lat`).                 |
+| Attribute         | Type    | Description                                       |
+| ----------------- | ------- | ------------------------------------------------- |
+| `enable-geocoder` | boolean | Enables the geocoder search control when present. |
+| `lat`             | number  | Initial map center latitude (use with `lng`).     |
+| `lng`             | number  | Initial map center longitude (use with `lat`).    |
 
 It also exposes several methods for customizing the map:
 
-| Method                  | Description                                                                          |
-|-------------------------|--------------------------------------------------------------------------------------|
-| `setLocation(location)` | Re-center the map and overlay based on a `{ name, lat, lng }` object.                |
-| `enableGeocoder()`      | Adds a geocoder search control to the map.                                           |
-| `addControl(control)`   | Adds a custom Leaflet control to the map.                                            |
-| `addLayer(layer)`       | Adds a custom Leaflet layer to the map.                                              |
-| `addMapEventListener()` | Attach event handlers to the underlying Leaflet map instance (e.g., 'zoomend').      |
+| Method                  | Description                                                                     |
+| ----------------------- | ------------------------------------------------------------------------------- |
+| `setLocation(location)` | Re-center the map and overlay based on a `{ name, lat, lng }` object.           |
+| `enableGeocoder()`      | Adds a geocoder search control to the map.                                      |
+| `addControl(control)`   | Adds a custom Leaflet control to the map.                                       |
+| `addLayer(layer)`       | Adds a custom Leaflet layer to the map.                                         |
+| `addMapEventListener()` | Attach event handlers to the underlying Leaflet map instance (e.g., 'zoomend'). |

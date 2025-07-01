@@ -1,8 +1,8 @@
-import { Circle, LatLngExpression, LatLngLiteral, LatLng, Path, latLng } from 'leaflet';
+import { Circle, LatLngExpression, LatLng, Path, latLng } from 'leaflet';
 import proj4 from 'proj4';
 
 // Define the source projection
-const WGS84 = 'EPSG:4326';  // Standard lat/lng coordinates
+const WGS84 = 'EPSG:4326'; // Standard lat/lng coordinates
 
 // Helper to get UTM zone from longitude
 const getUTMZone = (longitude: number): string => {
@@ -18,12 +18,10 @@ export interface PointOfInterest {
 }
 
 export interface Accelerator {
-
-  getName(): string
-  getReferencePoint(): LatLng
-  getTranslatedPath(referencePoint: LatLngExpression): Path
-  getTranslatedPointsOfInterest(referencePoint: LatLngExpression): PointOfInterest[]
-
+  getName(): string;
+  getReferencePoint(): LatLng;
+  getTranslatedPath(referencePoint: LatLngExpression): Path;
+  getTranslatedPointsOfInterest(referencePoint: LatLngExpression): PointOfInterest[];
 }
 
 export interface Location {
@@ -40,20 +38,25 @@ export interface GeocoderEvent {
 }
 
 export class CircularCollider implements Accelerator {
-  private name: string
-  private center: LatLng
-  private radius: number
-  private pointsOfInterest: PointOfInterest[]
+  private name: string;
+  private center: LatLng;
+  private radius: number;
+  private pointsOfInterest: PointOfInterest[];
 
-  constructor(name: string, center: LatLngExpression, radius: number, pointsOfInterest: PointOfInterest[]) {
-    this.name = name
-    this.center = latLng(center)
-    this.radius = radius
-    this.pointsOfInterest = pointsOfInterest
+  constructor(
+    name: string,
+    center: LatLngExpression,
+    radius: number,
+    pointsOfInterest: PointOfInterest[],
+  ) {
+    this.name = name;
+    this.center = latLng(center);
+    this.radius = radius;
+    this.pointsOfInterest = pointsOfInterest;
   }
 
   getName(): string {
-    return this.name
+    return this.name;
   }
 
   getReferencePoint(): LatLng {
@@ -61,13 +64,17 @@ export class CircularCollider implements Accelerator {
   }
 
   getTranslatedPath(referencePoint: LatLngExpression): Path {
-    return new Circle(referencePoint, { radius: this.radius, fill: false })
+    return new Circle(referencePoint, { radius: this.radius, fill: false });
   }
 
   getTranslatedPointsOfInterest(referencePoint: LatLngExpression): PointOfInterest[] {
     // Convert reference point and center to arrays for easier handling
-    const [refLat, refLng] = Array.isArray(referencePoint) ? referencePoint : [referencePoint.lat, referencePoint.lng];
-    const [centerLat, centerLng] = Array.isArray(this.center) ? this.center : [this.center.lat, this.center.lng];
+    const [refLat, refLng] = Array.isArray(referencePoint)
+      ? referencePoint
+      : [referencePoint.lat, referencePoint.lng];
+    const [centerLat, centerLng] = Array.isArray(this.center)
+      ? this.center
+      : [this.center.lat, this.center.lng];
 
     // Get UTM zones for both points
     const centerUTM = getUTMZone(centerLng);
@@ -81,8 +88,10 @@ export class CircularCollider implements Accelerator {
     const xDiff = refX - centerX;
     const yDiff = refY - centerY;
 
-    return this.pointsOfInterest.map(poi => {
-      const [poiLat, poiLng] = Array.isArray(poi.position) ? poi.position : [poi.position.lat, poi.position.lng];
+    return this.pointsOfInterest.map((poi) => {
+      const [poiLat, poiLng] = Array.isArray(poi.position)
+        ? poi.position
+        : [poi.position.lat, poi.position.lng];
       // Get UTM zone for the POI
       const poiUTM = getUTMZone(poiLng);
       // Convert POI to UTM
@@ -94,9 +103,8 @@ export class CircularCollider implements Accelerator {
       const [newLng, newLat] = proj4(refUTM, WGS84, [newX, newY]);
       return {
         ...poi,
-        position: [newLat, newLng]
+        position: [newLat, newLng],
       };
     });
   }
-
 }
