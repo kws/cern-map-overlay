@@ -13,8 +13,8 @@ interface GeocoderEvent {
   };
 }
 
-@customElement('lhc-map-overlay')
-export class SimpleGreeting extends LitElement {
+@customElement('cern-map-overlay')
+export class CERNMapOverlay extends LitElement {
   static styles = css`
     :host {
       display: block;

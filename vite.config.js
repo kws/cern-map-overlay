@@ -6,8 +6,8 @@ export default defineConfig({
   build: {
     lib: {
       entry: path.resolve(__dirname, 'src/index.ts'),
-      name: 'LhcMapOverlay',
-      fileName: (format) => `lhc-map-overlay.${format}.js`,
+      name: 'CERNMapOverlay',
+      fileName: (format) => `cern-map-overlay.${format}.js`,
       formats: ['es', 'iife'],
     },
   },
