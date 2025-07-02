@@ -47,6 +47,9 @@
   <body>
     <div class="accelerator-controls">
       <button id="geolocate-button">📍 Locate Me</button>
+      <label><input type="checkbox" data-accelerator="LINAC3" /> LINAC3</label>
+      <label><input type="checkbox" data-accelerator="LINAC4" /> LINAC4</label>
+      <label><input type="checkbox" data-accelerator="LEIR" /> LEIR</label>
       <label><input type="checkbox" data-accelerator="PSB" /> PSB</label>
       <label><input type="checkbox" data-accelerator="PS" /> PS</label>
       <label><input type="checkbox" data-accelerator="SPS" /> SPS</label>
@@ -60,24 +63,15 @@
 
     <script type="module" src="/src/index.ts"></script>
     <script type="module">
-      import { LHC, SPS, PS, PSB, FCC } from './src/index.ts';
+      import { cernMap } from './src/index.ts';
 
       const map = document.querySelector('cern-map-overlay');
-      map.zoom = 12;
-
-      // Create a mapping of accelerator names to objects
-      const acceleratorMap = {
-        LHC: LHC,
-        SPS: SPS,
-        PS: PS,
-        PSB: PSB,
-        FCC: FCC,
-      };
+      map.zoom = 11;
 
       const acceleratorCheckboxes = document.querySelectorAll('input[data-accelerator]');
       acceleratorCheckboxes.forEach((checkbox) => {
         const acceleratorName = checkbox.dataset.accelerator;
-        const acceleratorObject = acceleratorMap[acceleratorName];
+        const acceleratorObject = cernMap[acceleratorName];
         checkbox.addEventListener('change', (e) => {
           if (e.target.checked) {
             console.log('adding accelerator', acceleratorName);
