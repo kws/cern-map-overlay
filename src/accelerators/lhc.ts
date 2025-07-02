@@ -1,5 +1,6 @@
-import { CircularCollider, PointOfInterest } from '../types';
 import { LatLng } from 'leaflet';
+import { PointOfInterest } from '../types';
+import { CircularCollider } from './util';
 
 const LHC_RADIUS = 4300; // meters
 
@@ -40,6 +41,12 @@ const LHC_POINTS: PointOfInterest[] = [
 
 export const CENTER: LatLng = new LatLng(46.2725593743487, 6.065987083678201);
 
-const LHC = new CircularCollider('Large Hadron Collider', CENTER, LHC_RADIUS, LHC_POINTS);
+const LHC = new CircularCollider(
+  'Large Hadron Collider',
+  CENTER,
+  LHC_RADIUS,
+  LHC_POINTS,
+  '#00BFFF',
+);
 
 export default LHC;
