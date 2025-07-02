@@ -177,18 +177,18 @@ Here's a full example based on the demo in `index.html`. It shows how to wire up
 
 The `<cern-map-overlay>` element supports the following attributes:
 
-| Attribute           | Type    | Description                                       |
-| ------------------- | ------- | ------------------------------------------------- |
-| `enable-geocoder`   | boolean | Enables the geocoder search control when present. |
-| `lat`               | number  | Initial map center latitude (use with `lng`).     |
-| `lng`               | number  | Initial map center longitude (use with `lat`).    |
+| Attribute           | Type    | Description                                                                                           |
+| ------------------- | ------- | ----------------------------------------------------------------------------------------------------- |
+| `enable-geocoder`   | boolean | Enables the geocoder search control when present.                                                     |
+| `lat`               | number  | Initial map center latitude (use with `lng`).                                                         |
+| `lng`               | number  | Initial map center longitude (use with `lat`).                                                        |
 | `show-accelerators` | string  | Comma-separated list of accelerators to display (e.g., "LHC,SPS"). Available: LHC, SPS, PS, PSB, FCC. |
 
 It also exposes several methods for customizing the map:
 
-| Method                  | Description                                                                     |
-| ----------------------- | ------------------------------------------------------------------------------- |
-| `setLocation(location)` | Re-center the map and overlay based on a `{ lat: number, lng: number, name?: string }` object.           |
-| `addControl(control)`   | Adds a custom Leaflet control to the map.                                       |
-| `addLayer(layer)`       | Adds a custom Leaflet layer to the map.                                         |
-| `addMapEventListener()` | Attach event handlers to the underlying Leaflet map instance (e.g., 'zoomend'). |
+| Method                  | Description                                                                                    |
+| ----------------------- | ---------------------------------------------------------------------------------------------- |
+| `setLocation(location)` | Re-center the map and overlay based on a `{ lat: number, lng: number, name?: string }` object. |
+| `addControl(control)`   | Adds a custom Leaflet control to the map.                                                      |
+| `addLayer(layer)`       | Adds a custom Leaflet layer to the map.                                                        |
+| `addMapEventListener()` | Attach event handlers to the underlying Leaflet map instance (e.g., 'zoomend').                |

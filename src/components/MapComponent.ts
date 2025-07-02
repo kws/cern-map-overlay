@@ -1,4 +1,4 @@
-import { html, css, LitElement } from 'lit';
+import { html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import L, { type LatLngExpression, LatLng } from 'leaflet';
 import geocoder from 'leaflet-control-geocoder';
@@ -20,17 +20,24 @@ interface GeocoderEvent {
 
 @customElement('cern-map-overlay')
 export class CERNMapOverlay extends LitElement {
-  static styles = css`
-    :host {
-      display: block;
-      width: 100%;
-      height: 400px;
+  private _mapId = `map-${Math.random().toString(36).substring(2, 9)}`;
+
+  // Disable shadow DOM
+  createRenderRoot() {
+    return this;
+  }
+
+  private addStylesToDocument(styles: string, id: string) {
+    // Check if styles are already added
+    if (document.getElementById(id)) {
+      return;
     }
-    #map {
-      height: 100%;
-      width: 100%;
-    }
-  `;
+
+    const styleElement = document.createElement('style');
+    styleElement.id = id;
+    styleElement.textContent = styles;
+    document.head.appendChild(styleElement);
+  }
 
   private map: L.Map | null = null;
   private accelerators: Map<string, Accelerator> = new Map();
@@ -67,24 +74,33 @@ export class CERNMapOverlay extends LitElement {
   showAccelerators = '';
 
   firstUpdated() {
-    const mapElement = this.shadowRoot?.getElementById('map');
+    this.addStylesToDocument(
+      `
+      cern-map-overlay {
+        display: block;
+        height: var(--cern-map-height, 400px);
+        width: 100%;
+      }
+
+      cern-map-overlay>div {
+        display: block;
+        height: 100%;
+        width: 100%;
+      }
+    `,
+      'cern-map-overlay-styles',
+    );
+
+    const mapElement = this.querySelector(`#${this._mapId}`) as HTMLElement;
     if (mapElement) {
       this.map = L.map(mapElement).setView([this.lat, this.lng], this.zoom);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors',
       }).addTo(this.map);
-      const geocoderSheet = new CSSStyleSheet();
-      geocoderSheet.replaceSync(geocoderStyles);
 
-      const leafletSheet = new CSSStyleSheet();
-      leafletSheet.replaceSync(leafletStyles);
-      if (this.shadowRoot) {
-        this.shadowRoot.adoptedStyleSheets = [
-          ...this.shadowRoot.adoptedStyleSheets,
-          leafletSheet,
-          geocoderSheet,
-        ];
-      }
+      // Add Leaflet and Geocoder styles to the document head
+      this.addStylesToDocument(leafletStyles, 'leaflet-styles');
+      this.addStylesToDocument(geocoderStyles, 'geocoder-styles');
 
       this.map.on('moveend', this.onMoveEnd.bind(this));
     }
@@ -98,40 +114,71 @@ export class CERNMapOverlay extends LitElement {
   updated(changedProperties: Map<string | number | symbol, unknown>) {
     if (!this.map) return;
 
-    // Only update map view if changes came from external property updates, not from map interactions
-    if (!this._isUpdatingFromMap) {
-      if (changedProperties.has('lat') || changedProperties.has('lng')) {
-        this.map.setView([this.lat, this.lng], this.zoom);
-      }
+    this.syncMapView(changedProperties);
+    this.syncGeocoder(changedProperties);
+    this.syncAccelerators(changedProperties);
+    this.syncFollowLocation(changedProperties);
 
-      if (changedProperties.has('zoom')) {
-        this.map.setZoom(this.zoom);
-      }
+    // Always update layers at the end
+    this.updateMap();
+  }
+
+  private syncMapView(changedProperties: Map<string | number | symbol, unknown>) {
+    if (this._isUpdatingFromMap) return;
+
+    if (changedProperties.has('lat') || changedProperties.has('lng')) {
+      this.map!.setView([this.lat, this.lng], this.zoom);
     }
 
-    if (changedProperties.has('geocoderEnabled')) {
-      if (this.geocoderEnabled) {
-        this._geocoder = new geocoder();
-        this._geocoder.addTo(this.map);
-        this._geocoder.on('markgeocode', this.onGeocode);
-      } else if (this._geocoder) {
-        this._geocoder.remove();
-        this._geocoder = null;
-      }
+    if (changedProperties.has('zoom')) {
+      this.map!.setZoom(this.zoom);
     }
+  }
 
+  private syncGeocoder(changedProperties: Map<string | number | symbol, unknown>) {
+    if (!changedProperties.has('geocoderEnabled')) return;
+
+    if (this.geocoderEnabled) {
+      this._geocoder = new geocoder();
+      this._geocoder.addTo(this.map!);
+      this._geocoder.on('markgeocode', this.onGeocode);
+    } else if (this._geocoder) {
+      this._geocoder.remove();
+      this._geocoder = null;
+    }
+  }
+
+  private syncAccelerators(changedProperties: Map<string | number | symbol, unknown>) {
     if (changedProperties.has('showAccelerators')) {
       this.loadAcceleratorsFromProperty();
     }
+  }
 
+  private syncFollowLocation(changedProperties: Map<string | number | symbol, unknown>) {
     if (changedProperties.has('followLocation')) {
-      // When followLocation changes, we need to update the map to redraw accelerators
-      // with the new reference point (either current location or accelerator's reference point)
+      // Might affect accelerator path placement
       this.updateMap();
-      return; // updateMap() is called, so we don't need to call it again
     }
+  }
 
-    this.updateMap();
+  onMoveEnd() {
+    this._isUpdatingFromMap = true;
+    try {
+      const center = this.map?.getCenter();
+      const zoom = this.map?.getZoom();
+
+      if (center) {
+        this.lat = center.lat;
+        this.lng = center.lng;
+      }
+
+      if (zoom !== undefined) {
+        this.zoom = zoom;
+      }
+    } finally {
+      this._isUpdatingFromMap = false;
+    }
+    // updateMap will be triggered by updated()
   }
 
   private loadAcceleratorsFromProperty() {
@@ -166,15 +213,6 @@ export class CERNMapOverlay extends LitElement {
         }
       });
     }
-  }
-
-  onMoveEnd() {
-    this._isUpdatingFromMap = true;
-    this.lat = this.map?.getCenter().lat ?? this.lat;
-    this.lng = this.map?.getCenter().lng ?? this.lng;
-    this.zoom = this.map?.getZoom() ?? this.zoom;
-    this._isUpdatingFromMap = false;
-    // Don't call updateMap() here - it will be called by updated()
   }
 
   onGeocode = (e: GeocoderEvent) => {
@@ -232,6 +270,6 @@ export class CERNMapOverlay extends LitElement {
   }
 
   render() {
-    return html`<div id="map"></div>`;
+    return html`<div id="${this._mapId}"></div>`;
   }
 }

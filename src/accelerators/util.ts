@@ -46,7 +46,7 @@ export class CircularCollider implements Accelerator {
       className: `accelerator accelerator-circle ${slugify(this.name)}`,
       ...circleOptions,
     };
-    
+
     // Add part attribute to expose the element outside shadow DOM
     if (this.circleOptions.className) {
       this.circleOptions.className += ' accelerator-part';
