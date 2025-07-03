@@ -1,0 +1,32 @@
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Individual</title>
+    <script type="module" src="https://unpkg.com/cern-map-overlay@0.5.0"></script>
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      cern-map-overlay {
+        display: block;
+        width: 400px !important;
+        height: 400px !important;
+      }
+    </style>
+  </head>
+  <body>
+
+    <h1>LINAC4</h1>
+    <cern-map-overlay show-accelerators="LINAC4"></cern-map-overlay>
+
+    <h1>SPS</h1>
+    <cern-map-overlay show-accelerators="SPS"></cern-map-overlay>
+
+    <h1>LHC</h1>
+    <cern-map-overlay show-accelerators="LHC"></cern-map-overlay>
+
+</body>
+</html>

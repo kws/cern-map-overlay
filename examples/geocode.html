@@ -1,0 +1,36 @@
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Individual</title>
+    <script type="module" src="https://unpkg.com/cern-map-overlay@0.5.0"></script>
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      cern-map-overlay {
+        display: block;
+        width: 400px !important;
+        height: 400px !important;
+      }
+    </style>
+  </head>
+  <body>
+
+    <h1>Geocode</h1>
+    <cern-map-overlay show-accelerators="SPS,LHC" geocoder-enabled="true"></cern-map-overlay>
+
+    <script> 
+      const map = document.querySelector('cern-map-overlay');
+      map.addEventListener('markgeocode', (e) => {
+        map.followLocation = true;
+        map.updateMap();
+        map.fitBounds();
+      });
+    </script>
+
+
+</body>
+</html>
