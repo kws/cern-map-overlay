@@ -24,3 +24,13 @@ export interface GeocoderEvent {
     name: string;
   };
 }
+
+// Extended Path interface that includes the getBounds method
+export interface PathWithBounds extends Path {
+  getBounds(): {
+    getSouth: () => number;
+    getNorth: () => number;
+    getWest: () => number;
+    getEast: () => number;
+  };
+}

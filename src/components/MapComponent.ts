@@ -4,7 +4,7 @@ import L, { type LatLngExpression, LatLng } from 'leaflet';
 import geocoder from 'leaflet-control-geocoder';
 import geocoderStyles from 'leaflet-control-geocoder/dist/Control.Geocoder.css?raw';
 import leafletStyles from 'leaflet/dist/leaflet.css?raw';
-import { Accelerator } from '../types';
+import { Accelerator, PathWithBounds } from '../types';
 import { cernMap } from '../accelerators';
 
 interface GeocoderEvent {
@@ -42,14 +42,17 @@ export class CERNMapOverlay extends LitElement {
   private _geocoder: any = null; // Geocoder control instance with methods: addTo, remove, on
   private _isUpdatingFromMap = false; // Prevent circular updates
 
-  @property({ type: Number })
-  lat = 46.23497502511518;
+  private DEFAULT_LAT = 46.23497502511518;
+  private DEFAULT_LNG = 6.0536309870679235;
 
   @property({ type: Number })
-  lng = 6.0536309870679235;
+  lat: number | null = null;
 
   @property({ type: Number })
-  zoom = 12;
+  lng: number | null = null;
+
+  @property({ type: Number })
+  zoom: number | null = null;
 
   @property({ type: Boolean, attribute: 'geocoder-enabled' })
   geocoderEnabled = false;
@@ -79,23 +82,58 @@ export class CERNMapOverlay extends LitElement {
     );
 
     const mapElement = this.querySelector(`#${this._mapId}`) as HTMLElement;
-    if (mapElement) {
-      this.map = L.map(mapElement).setView([this.lat, this.lng], this.zoom);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
-      }).addTo(this.map);
-
-      // Add Leaflet and Geocoder styles to the document head
-      this.addStylesToDocument(leafletStyles, 'leaflet-styles');
-      this.addStylesToDocument(geocoderStyles, 'geocoder-styles');
-
-      this.map.on('moveend', this.onMoveEnd.bind(this));
+    if (!mapElement) {
+      throw new Error('Map element not found');
     }
+
+    this.map = L.map(mapElement);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+    }).addTo(this.map);
+
+    // Add Leaflet and Geocoder styles to the document head
+    this.addStylesToDocument(leafletStyles, 'leaflet-styles');
+    this.addStylesToDocument(geocoderStyles, 'geocoder-styles');
+
+    this.map.on('moveend', this.onMoveEnd.bind(this));
 
     // Load accelerators specified in the show-accelerators property
     this.loadAcceleratorsFromProperty();
 
     this.updateMap();
+
+    // If we started without a lat/long
+    if (this.lat === null || this.lng === null || this.zoom === null) {
+      this.fitBounds();
+    }
+  }
+
+  fitBounds() {
+    if (!this.map) return;
+    if (!this.layers.size) {
+      this.map.setView([this.DEFAULT_LAT, this.DEFAULT_LNG], 12);
+      return;
+    }
+    this.map.setView([0, 0], 12);
+    let minLat = Infinity;
+    let maxLat = -Infinity;
+    let minLng = Infinity;
+    let maxLng = -Infinity;
+    this.layers.forEach((layer) => {
+      console.log('layer', layer);
+      const bounds = (layer as PathWithBounds).getBounds();
+      if (bounds) {
+        minLat = Math.min(minLat, bounds.getSouth());
+        maxLat = Math.max(maxLat, bounds.getNorth());
+        minLng = Math.min(minLng, bounds.getWest());
+        maxLng = Math.max(maxLng, bounds.getEast());
+      }
+    });
+    this.map.fitBounds([
+      [minLat, minLng],
+      [maxLat, maxLng],
+    ]);
   }
 
   updated(changedProperties: Map<string | number | symbol, unknown>) {
@@ -114,11 +152,15 @@ export class CERNMapOverlay extends LitElement {
     if (this._isUpdatingFromMap) return;
 
     if (changedProperties.has('lat') || changedProperties.has('lng')) {
-      this.map!.setView([this.lat, this.lng], this.zoom);
+      if (this.lat !== null && this.lng !== null) {
+        this.map!.setView([this.lat, this.lng], this.zoom ?? 12);
+      }
     }
 
     if (changedProperties.has('zoom')) {
-      this.map!.setZoom(this.zoom);
+      if (this.zoom !== null) {
+        this.map!.setZoom(this.zoom);
+      }
     }
   }
 
@@ -243,7 +285,7 @@ export class CERNMapOverlay extends LitElement {
         map.removeLayer(oldLayer);
       }
       const refPoint: LatLngExpression = this.followLocation
-        ? new LatLng(this.lat, this.lng)
+        ? new LatLng(this.lat ?? 0, this.lng ?? 0)
         : accelerator.getReferencePoint();
       const translatedPath = accelerator.getTranslatedPath(refPoint);
       if (translatedPath) {
