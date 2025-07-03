@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CERN Map Overlay Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      cern-map-overlay {
+        /* Height will be set dynamically via JavaScript */
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-6">
+      <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-4">CERN Accelerator Complex</h1>
+        
+        <div class="flex flex-wrap items-center gap-3 mb-4">
+          <button id="geolocate-button" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm">
+            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+            </svg>
+            Locate Me
+          </button>
+          
+          <div id="accelerator-checkboxes" class="flex flex-wrap gap-2"></div>
+          
+          <label class="inline-flex items-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 cursor-pointer ml-auto">
+            <input type="checkbox" id="follow-location-checkbox" class="mr-2 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2">
+            Follow Location
+          </label>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+        <cern-map-overlay geocoder-enabled="true"></cern-map-overlay>
+      </div>
+    </div>
+
+    <script type="module">
+      import { cernMap } from 'https://unpkg.com/cern-map-overlay@0.5.0/dist/cern-map-overlay.es.js';
+
+      const map = document.querySelector('cern-map-overlay');
+      map.zoom = 11;
+
+      // Dynamically calculate and set map height
+      function updateMapHeight() {
+        const header = document.querySelector('.bg-white.rounded-lg.shadow-lg.p-6.mb-6');
+        const headerHeight = header.offsetHeight;
+        const containerPadding = 48; // 24px top + 24px bottom padding
+        const marginBottom = 24; // 6 * 4px (mb-6)
+        const availableHeight = window.innerHeight - headerHeight - containerPadding - marginBottom;
+        
+        // Set minimum height and ensure it's not negative
+        const mapHeight = Math.max(availableHeight, 400);
+        map.style.setProperty('--cern-map-height', `${mapHeight}px`);
+      }
+
+      // Update height on load and resize
+      updateMapHeight();
+      window.addEventListener('resize', updateMapHeight);
+
+      // Dynamically generate accelerator checkboxes
+      const acceleratorCheckboxesContainer = document.querySelector('#accelerator-checkboxes');
+      
+      Object.keys(cernMap).forEach((acceleratorName) => {
+        const acceleratorObject = cernMap[acceleratorName];
+        const label = document.createElement('label');
+        
+        // Get the accelerator color and create faded versions
+        const baseColor = acceleratorObject.color || '#6B7280'; // fallback to gray
+        const fadedColor = `${baseColor}20`; // 20% opacity for unchecked
+        const vibrantColor = `${baseColor}30`; // 30% opacity for checked
+        const textColor = baseColor; // Use the base color for text
+        
+        label.className = 'inline-flex items-center px-3 py-2 rounded-lg transition-colors duration-200 cursor-pointer border';
+        label.style.backgroundColor = fadedColor;
+        label.style.color = textColor;
+        label.style.borderColor = `${baseColor}40`;
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.dataset.accelerator = acceleratorName;
+        checkbox.className = 'mr-2 w-4 h-4 rounded focus:ring-2 focus:ring-offset-0';
+        checkbox.style.accentColor = baseColor;
+        
+        // Set LHC as checked by default
+        if (acceleratorName === 'LHC') {
+          checkbox.checked = true;
+          label.style.backgroundColor = vibrantColor;
+        }
+        
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(acceleratorName));
+        
+        // Add hover effects
+        label.addEventListener('mouseenter', () => {
+          const isChecked = checkbox.checked;
+          const hoverColor = isChecked ? `${baseColor}40` : `${baseColor}30`;
+          label.style.backgroundColor = hoverColor;
+        });
+        
+        label.addEventListener('mouseleave', () => {
+          const isChecked = checkbox.checked;
+          const normalColor = isChecked ? vibrantColor : fadedColor;
+          label.style.backgroundColor = normalColor;
+        });
+        
+        acceleratorCheckboxesContainer.appendChild(label);
+      });
+
+      const acceleratorCheckboxes = document.querySelectorAll('input[data-accelerator]');
+      acceleratorCheckboxes.forEach((checkbox) => {
+        const acceleratorName = checkbox.dataset.accelerator;
+        const acceleratorObject = cernMap[acceleratorName];
+        const label = checkbox.closest('label');
+        
+        checkbox.addEventListener('change', (e) => {
+          if (e.target.checked) {
+            console.log('adding accelerator', acceleratorName);
+            map.addAccelerator(acceleratorName, acceleratorObject);
+            // Update visual state
+            label.style.backgroundColor = `${acceleratorObject.color}30`;
+          } else {
+            console.log('removing accelerator', acceleratorName);
+            map.removeAccelerator(acceleratorName);
+            // Update visual state
+            label.style.backgroundColor = `${acceleratorObject.color}20`;
+          }
+        });
+        if (checkbox.checked) {
+          map.addAccelerator(acceleratorName, acceleratorObject);
+        }
+      });
+
+      const geolocateButton = document.querySelector('#geolocate-button');
+      geolocateButton.addEventListener('click', (e) => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            map.lat = latitude;
+            map.lng = longitude;
+            map.followLocation = true;
+            followLocationCheckbox.checked = true;
+          },
+          (error) => {
+            console.error('Geolocation error:', error);
+          },
+        );
+      });
+
+      const followLocationCheckbox = document.querySelector('#follow-location-checkbox');
+      followLocationCheckbox.addEventListener('change', (e) => {
+        map.followLocation = e.target.checked;
+      });
+      map.followLocation = followLocationCheckbox.checked;
+
+      map.addEventListener('markgeocode', (e) => {
+        map.followLocation = true;
+        followLocationCheckbox.checked = true;
+      });
+    </script>
+  </body>
+</html>

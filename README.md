@@ -78,7 +78,7 @@ import 'cern-map-overlay';
 You can also import the accelerator definitions:
 
 ```js
-import { LHC, SPS, PS, PSB, FCC } from 'cern-map-overlay';
+import { LHC, SPS, PS, PSB, FCC, LINAC4, LINAC3, LEIR } from 'cern-map-overlay';
 ```
 
 ## Simple Usage
@@ -92,6 +92,53 @@ The easiest way to show accelerators is using the `show-accelerators` attribute:
 
 This will automatically display the LHC and SPS accelerators on the map.
 
+## Examples
+
+### Individual Accelerators
+
+Show individual accelerators:
+
+```html
+<h1>LINAC4</h1>
+<cern-map-overlay show-accelerators="LINAC4"></cern-map-overlay>
+
+<h1>SPS</h1>
+<cern-map-overlay show-accelerators="SPS"></cern-map-overlay>
+
+<h1>LHC</h1>
+<cern-map-overlay show-accelerators="LHC"></cern-map-overlay>
+```
+
+### Multiple Accelerators
+
+Display multiple accelerators on the same map:
+
+```html
+<h1>LINAC4, Booster & PS</h1>
+<cern-map-overlay show-accelerators="LINAC4,PSB,PS"></cern-map-overlay>
+
+<h1>LHC & FCC</h1>
+<cern-map-overlay show-accelerators="LHC,FCC"></cern-map-overlay>
+```
+
+### With Geocoder
+
+Enable the geocoder search control and handle search events:
+
+```html
+<h1>Geocode</h1>
+<cern-map-overlay show-accelerators="SPS,LHC" geocoder-enabled="true"></cern-map-overlay>
+
+<script> 
+  const map = document.querySelector('cern-map-overlay');
+  map.addEventListener('markgeocode', (e) => {
+    map.followLocation = true;
+    map.updateMap();
+    map.fitBounds();
+  });
+</script>
+```
+
 ## Advanced API Example
 
 Here's a full example based on the demo in `index.html`. It shows how to wire up festival and geolocation controls to the map overlay:
@@ -99,37 +146,30 @@ Here's a full example based on the demo in `index.html`. It shows how to wire up
 ```html
 <div class="accelerator-controls">
   <button id="geolocate-button">📍 Locate Me</button>
+  <label><input type="checkbox" data-accelerator="LINAC4" /> LINAC4</label>
   <label><input type="checkbox" data-accelerator="PSB" /> PSB</label>
   <label><input type="checkbox" data-accelerator="PS" /> PS</label>
   <label><input type="checkbox" data-accelerator="SPS" /> SPS</label>
   <label><input type="checkbox" data-accelerator="LHC" checked /> LHC</label>
   <label><input type="checkbox" data-accelerator="FCC" /> FCC</label>
+  <label><input type="checkbox" data-accelerator="LINAC3" /> LINAC3</label>
+  <label><input type="checkbox" data-accelerator="LEIR" /> LEIR</label>
 
   <label><input type="checkbox" id="follow-location-checkbox" /> Follow Location</label>
 </div>
 
 <cern-map-overlay geocoder-enabled="true"></cern-map-overlay>
 
-<script type="module" src="https://unpkg.com/cern-map-overlay"></script>
 <script type="module">
-  import { LHC, SPS, PS, PSB, FCC } from 'cern-map-overlay';
+  import { cernMap } from 'https://unpkg.com/cern-map-overlay/dist/cern-map-overlay.es.js';
 
   const map = document.querySelector('cern-map-overlay');
   map.zoom = 12;
 
-  // Create a mapping of accelerator names to objects
-  const acceleratorMap = {
-    LHC: LHC,
-    SPS: SPS,
-    PS: PS,
-    PSB: PSB,
-    FCC: FCC,
-  };
-
   const acceleratorCheckboxes = document.querySelectorAll('input[data-accelerator]');
   acceleratorCheckboxes.forEach((checkbox) => {
     const acceleratorName = checkbox.dataset.accelerator;
-    const acceleratorObject = acceleratorMap[acceleratorName];
+    const acceleratorObject = cernMap[acceleratorName];
     checkbox.addEventListener('change', (e) => {
       if (e.target.checked) {
         console.log('adding accelerator', acceleratorName);
@@ -182,7 +222,7 @@ The `<cern-map-overlay>` element supports the following attributes:
 | `enable-geocoder`   | boolean | Enables the geocoder search control when present.                                                     |
 | `lat`               | number  | Initial map center latitude (use with `lng`).                                                         |
 | `lng`               | number  | Initial map center longitude (use with `lat`).                                                        |
-| `show-accelerators` | string  | Comma-separated list of accelerators to display (e.g., "LHC,SPS"). Available: LHC, SPS, PS, PSB, FCC. |
+| `show-accelerators` | string  | Comma-separated list of accelerators to display (e.g., "LHC,SPS"). Available: LINAC4, PSB, PS, SPS, LHC, FCC, LINAC3, LEIR. |
 
 It also exposes several methods for customizing the map:
 
