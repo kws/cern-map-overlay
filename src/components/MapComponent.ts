@@ -5,11 +5,7 @@ import geocoder from 'leaflet-control-geocoder';
 import geocoderStyles from 'leaflet-control-geocoder/dist/Control.Geocoder.css?raw';
 import leafletStyles from 'leaflet/dist/leaflet.css?raw';
 import { Accelerator } from '../types';
-import LHC from '../accelerators/lhc';
-import SPS from '../accelerators/sps';
-import PS from '../accelerators/ps';
-import PSB from '../accelerators/booster';
-import FCC from '../accelerators/fcc';
+import { cernMap } from '../accelerators';
 
 interface GeocoderEvent {
   geocode: {
@@ -45,15 +41,6 @@ export class CERNMapOverlay extends LitElement {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private _geocoder: any = null; // Geocoder control instance with methods: addTo, remove, on
   private _isUpdatingFromMap = false; // Prevent circular updates
-
-  // Available accelerators mapping
-  private static readonly AVAILABLE_ACCELERATORS = {
-    LHC,
-    SPS,
-    PS,
-    PSB,
-    FCC,
-  };
 
   @property({ type: Number })
   lat = 46.23497502511518;
@@ -200,15 +187,12 @@ export class CERNMapOverlay extends LitElement {
         .filter((name) => name.length > 0);
 
       acceleratorNames.forEach((name) => {
-        const accelerator =
-          CERNMapOverlay.AVAILABLE_ACCELERATORS[
-            name as keyof typeof CERNMapOverlay.AVAILABLE_ACCELERATORS
-          ];
+        const accelerator = cernMap[name as keyof typeof cernMap];
         if (accelerator) {
           this.addAccelerator(`__auto_${name}`, accelerator);
         } else {
           console.warn(
-            `Unknown accelerator: ${name}. Available accelerators: ${Object.keys(CERNMapOverlay.AVAILABLE_ACCELERATORS).join(', ')}`,
+            `Unknown accelerator: ${name}. Available accelerators: ${Object.keys(cernMap).join(', ')}`,
           );
         }
       });
