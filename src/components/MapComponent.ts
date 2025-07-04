@@ -7,6 +7,17 @@ import leafletStyles from 'leaflet/dist/leaflet.css?raw';
 import { Accelerator, CernMapLayer } from '../types/cernMap';
 import { GeocoderEvent } from '../types/leaflet-control-geocoder';
 import { cernMap } from '../accelerators';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
+delete (L.Icon.Default.prototype as { _getIconUrl?: () => string })._getIconUrl;
+
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
 
 const MAP_STYLES = `
 cern-map-overlay {
