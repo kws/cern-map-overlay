@@ -1,0 +1,45 @@
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Individual</title>
+    <script type="module" src="src/index.ts"></script>
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      cern-map-overlay {
+        display: block;
+        width: 400px !important;
+        height: 400px !important;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>LINAC4, Booster & PS</h1>
+    <cern-map-overlay show-accelerators="LINAC4,PSB,PS"></cern-map-overlay>
+
+    <h1>LHC & FCC With Lat, Lng & Zoom</h1>
+    <cern-map-overlay
+      show-accelerators="LHC,FCC"
+      lat="46.227638"
+      lng="6.028162"
+      zoom="12"
+    ></cern-map-overlay>
+
+    <h1>LHC & FCC With Follow Location</h1>
+    <cern-map-overlay show-accelerators="LHC,FCC" follow-location="true"></cern-map-overlay>
+
+    <h1>LHC & FCC With Follow Location & Lat, Lng & Zoom</h1>
+    <!--  Location is London -->
+    <cern-map-overlay
+      show-accelerators="LHC,FCC"
+      follow-location="true"
+      lat="51.5074"
+      lng="-0.1278"
+      zoom="8"
+    ></cern-map-overlay>
+  </body>
+</html>

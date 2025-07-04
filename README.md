@@ -129,7 +129,7 @@ Enable the geocoder search control and handle search events:
 <h1>Geocode</h1>
 <cern-map-overlay show-accelerators="SPS,LHC" geocoder-enabled="true"></cern-map-overlay>
 
-<script> 
+<script>
   const map = document.querySelector('cern-map-overlay');
   map.addEventListener('markgeocode', (e) => {
     map.followLocation = true;
@@ -217,11 +217,11 @@ Here's a full example based on the demo in `index.html`. It shows how to wire up
 
 The `<cern-map-overlay>` element supports the following attributes:
 
-| Attribute           | Type    | Description                                                                                           |
-| ------------------- | ------- | ----------------------------------------------------------------------------------------------------- |
-| `enable-geocoder`   | boolean | Enables the geocoder search control when present.                                                     |
-| `lat`               | number  | Initial map center latitude (use with `lng`).                                                         |
-| `lng`               | number  | Initial map center longitude (use with `lat`).                                                        |
+| Attribute           | Type    | Description                                                                                                                 |
+| ------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `enable-geocoder`   | boolean | Enables the geocoder search control when present.                                                                           |
+| `lat`               | number  | Initial map center latitude (use with `lng`).                                                                               |
+| `lng`               | number  | Initial map center longitude (use with `lat`).                                                                              |
 | `show-accelerators` | string  | Comma-separated list of accelerators to display (e.g., "LHC,SPS"). Available: LINAC4, PSB, PS, SPS, LHC, FCC, LINAC3, LEIR. |
 
 It also exposes several methods for customizing the map:

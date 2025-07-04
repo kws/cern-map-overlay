@@ -1,5 +1,5 @@
 import { LatLng } from 'leaflet';
-import { PointOfInterest } from '../types';
+import { PointOfInterest } from '../types/cernMap';
 import { CircularCollider } from './util';
 
 const LHC_RADIUS = 4300; // meters

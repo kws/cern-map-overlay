@@ -18,11 +18,10 @@
     </style>
   </head>
   <body>
-
     <h1>Geocode</h1>
     <cern-map-overlay show-accelerators="SPS,LHC" geocoder-enabled="true"></cern-map-overlay>
 
-    <script> 
+    <script>
       const map = document.querySelector('cern-map-overlay');
       map.addEventListener('markgeocode', (e) => {
         map.followLocation = true;
@@ -30,7 +29,5 @@
         map.fitBounds();
       });
     </script>
-
-
-</body>
+  </body>
 </html>

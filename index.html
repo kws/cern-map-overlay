@@ -66,7 +66,6 @@
       import { cernMap } from './src/index.ts';
 
       const map = document.querySelector('cern-map-overlay');
-      map.zoom = 11;
 
       const acceleratorCheckboxes = document.querySelectorAll('input[data-accelerator]');
       acceleratorCheckboxes.forEach((checkbox) => {
@@ -74,16 +73,16 @@
         const acceleratorObject = cernMap[acceleratorName];
         checkbox.addEventListener('change', (e) => {
           if (e.target.checked) {
-            console.log('adding accelerator', acceleratorName);
             map.addAccelerator(acceleratorName, acceleratorObject);
           } else {
-            console.log('removing accelerator', acceleratorName);
             map.removeAccelerator(acceleratorName);
           }
+          map.fitBounds();
         });
         if (checkbox.checked) {
           map.addAccelerator(acceleratorName, acceleratorObject);
         }
+        map.fitBounds();
       });
 
       const geolocateButton = document.querySelector('#geolocate-button');

@@ -1,6 +1,6 @@
 import { LatLng, Path, latLng, Polygon, LatLngExpression } from 'leaflet';
 import proj4 from 'proj4';
-import { PointOfInterest, Accelerator } from '../types';
+import { PointOfInterest, Accelerator } from '../types/cernMap';
 import { WGS84, getUTMZone, slugify, translatePoints } from './util';
 
 /**

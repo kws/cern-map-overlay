@@ -1,6 +1,6 @@
 import { Circle, LatLngExpression, LatLng, Path, latLng, CircleOptions, Polyline } from 'leaflet';
 import proj4 from 'proj4';
-import { Accelerator, PointOfInterest } from '../types';
+import { Accelerator, PointOfInterest } from '../types/cernMap';
 
 export const WGS84 = 'EPSG:4326'; // Standard lat/lng coordinates
 
