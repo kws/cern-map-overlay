@@ -76,9 +76,9 @@ export class RoundedRectangleAccelerator implements Accelerator {
       : [referencePoint.lat, referencePoint.lng];
 
     // Get UTM zone for the reference point
-    const refUTM = getUTMZone(refLng);
+    const refUTM = getUTMZone(refLat, refLng);
 
-    // Convert reference point to UTM coordinates
+    // Convert reference point to UTM coordinates (this will be the new center)
     const [refX, refY] = proj4(WGS84, refUTM, [refLng, refLat]);
 
     // Create rectangle corners in meters relative to center
@@ -92,14 +92,17 @@ export class RoundedRectangleAccelerator implements Accelerator {
     const cos = Math.cos((this.rotation * Math.PI) / 180);
     const sin = Math.sin((this.rotation * Math.PI) / 180);
 
-    const rotatedCorners = corners.map(([x, y]) => [x * cos - y * sin, x * sin + y * cos]);
+    const polygonPoints: LatLngExpression[] = corners.map(([x, y]) => {
+      // Apply rotation to the local offsets
+      const rotatedX = x * cos - y * sin;
+      const rotatedY = x * sin + y * cos;
 
-    // Convert rotated corners to UTM coordinates relative to reference point
-    const utmCorners = rotatedCorners.map(([x, y]) => [refX + x, refY + y]);
+      // Add the rotated offsets to the new center (refX, refY)
+      const finalX_utm = refX + rotatedX;
+      const finalY_utm = refY + rotatedY;
 
-    // Convert UTM coordinates back to lat/lng
-    const polygonPoints: LatLngExpression[] = utmCorners.map(([x, y]) => {
-      const [lng, lat] = proj4(refUTM, WGS84, [x, y]);
+      // Convert back to lat/lng
+      const [lng, lat] = proj4(refUTM, WGS84, [finalX_utm, finalY_utm]);
       return [lat, lng];
     });
 

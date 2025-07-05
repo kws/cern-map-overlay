@@ -4,9 +4,10 @@ import { Accelerator, PointOfInterest } from '../types/cernMap';
 
 export const WGS84 = 'EPSG:4326'; // Standard lat/lng coordinates
 
-export const getUTMZone = (longitude: number): string => {
-  const zone = Math.floor((longitude + 180) / 6) + 1;
-  return `EPSG:326${zone.toString().padStart(2, '0')}`;
+export const getUTMZone = (latitude: number, longitude: number): string => {
+  const zoneNum = Math.floor((longitude + 180) / 6) + 1;
+  const hemisphere = latitude >= 0 ? '6' : '7'; // 6 for Northern, 7 for Southern
+  return `EPSG:32${hemisphere}${zoneNum.toString().padStart(2, '0')}`;
 };
 
 export const slugify = (name: string): string => {
@@ -16,11 +17,7 @@ export const slugify = (name: string): string => {
     .replace(/[^a-z0-9-]/g, '');
 };
 
-export const translatePoints = (
-  referencePoint: LatLngExpression,
-  originalPoint: LatLngExpression,
-  pointsOfInterest: PointOfInterest[],
-): PointOfInterest[] => {
+export const translate = (referencePoint: LatLngExpression, originalPoint: LatLngExpression) => {
   const [refLat, refLng] = Array.isArray(referencePoint)
     ? referencePoint
     : [referencePoint.lat, referencePoint.lng];
@@ -29,31 +26,43 @@ export const translatePoints = (
     ? originalPoint
     : [originalPoint.lat, originalPoint.lng];
 
-  // Get UTM zones for both points
-  const centerUTM = getUTMZone(centerLng);
-  const refUTM = getUTMZone(refLng);
+  // Determine the target UTM zone based on the referencePoint (where the accelerator will be displayed)
+  const targetUTM = getUTMZone(refLat, refLng);
 
-  // Convert center and reference point to their respective UTM coordinates
-  const [centerX, centerY] = proj4(WGS84, centerUTM, [centerLng, centerLat]);
-  const [refX, refY] = proj4(WGS84, refUTM, [refLng, refLat]);
+  // Convert originalPoint (CERN) to the target UTM coordinates
+  const [originalX_in_targetUTM, originalY_in_targetUTM] = proj4(WGS84, targetUTM, [
+    centerLng,
+    centerLat,
+  ]);
 
-  // Calculate translation vector in meters
-  const xDiff = refX - centerX;
-  const yDiff = refY - centerY;
+  // Convert referencePoint (e.g., Quito) to the target UTM coordinates
+  const [refX_in_targetUTM, refY_in_targetUTM] = proj4(WGS84, targetUTM, [refLng, refLat]);
+
+  // Calculate translation vector in meters within the target UTM zone
+  const xDiff = refX_in_targetUTM - originalX_in_targetUTM;
+  const yDiff = refY_in_targetUTM - originalY_in_targetUTM;
+
+  return { xDiff, yDiff, targetUTM };
+};
+
+export const translatePoints = (
+  referencePoint: LatLngExpression,
+  originalPoint: LatLngExpression,
+  pointsOfInterest: PointOfInterest[],
+): PointOfInterest[] => {
+  const { xDiff, yDiff, targetUTM } = translate(referencePoint, originalPoint);
 
   return pointsOfInterest.map((poi) => {
     const [poiLat, poiLng] = Array.isArray(poi.position)
       ? poi.position
       : [poi.position.lat, poi.position.lng];
-    // Get UTM zone for the POI
-    const poiUTM = getUTMZone(poiLng);
-    // Convert POI to UTM
-    const [poiX, poiY] = proj4(WGS84, poiUTM, [poiLng, poiLat]);
+    // Convert POI to the target UTM
+    const [poiX, poiY] = proj4(WGS84, targetUTM, [poiLng, poiLat]);
     // Apply translation in meters
     const newX = poiX + xDiff;
     const newY = poiY + yDiff;
-    // Convert back to lat/lng using the reference point's UTM zone
-    const [newLng, newLat] = proj4(refUTM, WGS84, [newX, newY]);
+    // Convert back to lat/lng from the target UTM
+    const [newLng, newLat] = proj4(targetUTM, WGS84, [newX, newY]);
     return {
       ...poi,
       position: [newLat, newLng],
@@ -149,24 +158,23 @@ export class LinearAccelerator implements Accelerator {
     // Calculate half length for extending from midpoint
     const halfLength = this.length / 2;
 
-    // Get UTM zone for the reference point
     const [refLat, refLng] = Array.isArray(referencePoint)
       ? referencePoint
       : [referencePoint.lat, referencePoint.lng];
-    const refUTM = getUTMZone(refLng);
 
-    // Convert reference point to UTM coordinates
+    // Determine the UTM zone of the reference point
+    const refUTM = getUTMZone(refLat, refLng);
+
+    // Convert reference point to its own UTM coordinates
     const [refX, refY] = proj4(WGS84, refUTM, [refLng, refLat]);
 
-    // Calculate start and end points in UTM coordinates
-    // For 0 degrees (North), we move along Y-axis (North-South)
-    // For 90 degrees (East), we move along X-axis (East-West)
+    // Calculate start and end points in UTM coordinates relative to the reference point
     const startX = refX - halfLength * Math.sin(directionRad);
     const startY = refY - halfLength * Math.cos(directionRad);
     const endX = refX + halfLength * Math.sin(directionRad);
     const endY = refY + halfLength * Math.cos(directionRad);
 
-    // Convert back to lat/lng
+    // Convert back to lat/lng from the reference point's UTM zone
     const [startLng, startLat] = proj4(refUTM, WGS84, [startX, startY]);
     const [endLng, endLat] = proj4(refUTM, WGS84, [endX, endY]);
 

@@ -5,41 +5,195 @@
     <script type="module" src="src/index.ts"></script>
     <style>
       body {
+        margin: 0;
+        padding: 20px;
+        font-family: Arial, sans-serif;
+      }
+
+      .container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: center;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .map-section {
+        flex: 1 1 400px;
+        min-width: 400px;
+        max-width: 600px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
+        text-align: center;
       }
+
+      .map-section h1 {
+        margin: 0 0 15px 0;
+        font-size: 1.2rem;
+        color: #333;
+      }
+
       cern-map-overlay {
         display: block;
-        width: 400px !important;
-        height: 400px !important;
+        width: 100% !important;
+        height: 300px !important;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       }
     </style>
   </head>
   <body>
-    <h1>LINAC4, Booster & PS</h1>
-    <cern-map-overlay show-accelerators="LINAC4,PSB,PS"></cern-map-overlay>
+    <div class="container">
+      <div class="map-section">
+        <h1>LINAC4, Booster & PS</h1>
+        <cern-map-overlay show-accelerators="LINAC4,PSB,PS"></cern-map-overlay>
+      </div>
 
-    <h1>LHC & FCC With Lat, Lng & Zoom</h1>
-    <cern-map-overlay
-      show-accelerators="LHC,FCC"
-      lat="46.227638"
-      lng="6.028162"
-      zoom="12"
-    ></cern-map-overlay>
+      <div class="map-section">
+        <h1>LHC & FCC With Lat, Lng & Zoom</h1>
+        <cern-map-overlay
+          show-accelerators="LHC,FCC"
+          lat="46.227638"
+          lng="6.028162"
+          zoom="12"
+        ></cern-map-overlay>
+      </div>
 
-    <h1>LHC & FCC With Follow Location</h1>
-    <cern-map-overlay show-accelerators="LHC,FCC" follow-location="true"></cern-map-overlay>
+      <div class="map-section">
+        <h1>LHC & FCC With Follow Location</h1>
+        <cern-map-overlay show-accelerators="LHC,FCC" follow-location="true"></cern-map-overlay>
+      </div>
 
-    <h1>LHC & FCC With Follow Location & Lat, Lng & Zoom</h1>
-    <!--  Location is London -->
-    <cern-map-overlay
-      show-accelerators="LHC,FCC"
-      follow-location="true"
-      lat="51.5074"
-      lng="-0.1278"
-      zoom="8"
-    ></cern-map-overlay>
+      <div class="map-section">
+        <h1>LHC & FCC With Follow Location & Lat, Lng & Zoom</h1>
+        <!--  Location is London -->
+        <cern-map-overlay
+          show-accelerators="LHC,FCC"
+          follow-location="true"
+          lat="51.5074"
+          lng="-0.1278"
+          zoom="8"
+        ></cern-map-overlay>
+      </div>
+
+      <div class="map-section">
+        <h1>Plaza Grande,Quito (zoom 17)</h1>
+        <cern-map-overlay
+          show-accelerators="LINAC3,LINAC4,PSB,PS,LEIR"
+          follow-location="true"
+          lat="-0.22009090117644106"
+          lng="-78.51207455922294"
+          zoom="17"
+          id="plaza-grande"
+        ></cern-map-overlay>
+      </div>
+
+      <div class="map-section">
+        <h1>North Cape (zoom 16)</h1>
+        <cern-map-overlay
+          show-accelerators="LINAC3,LINAC4,PSB,PS,LEIR"
+          follow-location="true"
+          lat="71.16986582302509"
+          lng="25.783703452584305"
+          zoom="16"
+          id="north-cape"
+        ></cern-map-overlay>
+      </div>
+
+      <div class="map-section">
+        <h1>Scott Base (zoom 15)</h1>
+        <cern-map-overlay
+          show-accelerators="LINAC3,LINAC4,PSB,PS,LEIR"
+          follow-location="true"
+          lat="-77.849132"
+          lng="166.768196"
+          zoom="15"
+          id="scott-base"
+        ></cern-map-overlay>
+      </div>
+    </div>
+
+    <script type="module">
+      import LatLon from 'https://cdn.jsdelivr.net/npm/geodesy@2.4.0/latlon-ellipsoidal-vincenty.js';
+      import { L } from './src/index.ts';
+
+      /**
+       * Calculates the four cardinal coordinates (N, E, S, W) from a center point and radius.
+       *
+       * @param {object} centerPoint - The starting point ({ lat: number, lng: number }).
+       * @param {number} radius - The distance from the center in meters.
+       * @returns {object} An object containing the four calculated coordinates.
+       * e.g., { north: {lat, lon}, south: {lat, lon}, ... }
+       */
+      function getCrossCoordinates(centerPoint, radius) {
+        // Ensure the radius is a number
+        if (typeof radius !== 'number') {
+          throw new Error('Radius must be a number in meters.');
+        }
+
+        // Create a starting point object using the geodesy library
+        const start = new LatLon(centerPoint.lat, centerPoint.lng);
+
+        // Calculate destination points for each cardinal direction (bearing)
+        // 0° is North, 90° is East, 180° is South, 270° is West
+        const north = start.destinationPoint(radius, 0);
+        const east = start.destinationPoint(radius, 90);
+        const south = start.destinationPoint(radius, 180);
+        const west = start.destinationPoint(radius, 270);
+
+        return { north, south, east, west };
+      }
+
+      const drawCross = (id, radius = 100) => {
+        const webComponent = document.getElementById(id);
+        const map = webComponent.map;
+
+        const center = map.getCenter();
+
+        const { north, south, east, west } = getCrossCoordinates(center, radius);
+
+
+        // Create the cross lines using the imported Leaflet
+        const northSouthLine = L.polyline(
+          [
+            [south.lat, south.lng],
+            [north.lat, north.lng],
+          ],
+          {
+            color: 'black',
+            weight: 2,
+            opacity: 0.8,
+            dashArray: '5, 5',
+          },
+        );
+
+        const eastWestLine = L.polyline(
+          [
+            [center.lat, west.lng],
+            [center.lat, east.lng],
+          ],
+          {
+            color: 'black',
+            weight: 2,
+            opacity: 0.8,
+            dashArray: '5, 5',
+          },
+        );
+
+        // Add lines to map
+        northSouthLine.addTo(map);
+        eastWestLine.addTo(map);
+
+
+        console.log('Cross drawn successfully');
+        return { northSouthLine, eastWestLine };
+      };
+
+      drawCross('plaza-grande');
+      drawCross('north-cape');
+      drawCross('scott-base');
+    </script>
   </body>
 </html>
